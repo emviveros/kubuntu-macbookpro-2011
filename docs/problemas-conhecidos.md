@@ -57,3 +57,13 @@ O Dolphin estava aberto quando a configuração mudou e sobrescreveu tudo ao fec
 
 Verificar: `systemctl --user is-enabled tracker-miner-fs-3.service` deve responder `masked`, e `pgrep -a tracker` não deve mostrar nada.
 
+
+## Ctrl+←/→ minimiza ou maximiza a janela em vez de trocar de área
+
+**Sintoma:** nos apps gráficos, `Ctrl+←` minimiza a janela e `Ctrl+→` maximiza. No terminal, os dois trocam de área normalmente.
+
+**Causa:** nos apps gráficos o Toshy transforma o Ctrl físico em Meta. O bloco `GenGUI overrides: Ubuntu` do `toshy_config.py` só confere `DISTRO_ID == 'ubuntu'`, que também vale para o Kubuntu, e transforma `Meta+←/→` em `Meta+PgDown/PgUp` (atalhos do GNOME). No KDE, essas teclas minimizam e maximizam. Como esse bloco vem antes do bloco do KDE, é ele que vale.
+
+**Solução:** `files/toshy/user_apps.py` define `Super-Left → C-Super-Left` e `Super-Right → C-Super-Right` na *slice* do usuário, que tem prioridade. No KDE, `scripts/80-gestos.sh` também liga `Meta+←/→` à troca de área e tira os atalhos de encaixar a janela na metade da tela, que usavam essas teclas.
+
+**Diagnóstico:** o teclado virtual do Toshy é o `XWayKeyz (virtual) Keyboard` em `/proc/bus/input/devices`. Lendo o `/dev/input/eventN` dele, dá para ver as teclas que realmente chegam ao KDE.

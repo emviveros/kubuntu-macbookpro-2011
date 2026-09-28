@@ -42,7 +42,7 @@ Se ficar pequeno demais, suba o DPI para 92 ou 96 antes de mexer nas fontes.
 
 | Painel | Posição | Altura | Ocultar | Widgets |
 |---|---|---|---|---|
-| Barra superior | topo | 26 px | não | `kickoff`, `appmenu`, `panelspacer`, `systemtray`, `digitalclock` |
+| Barra superior | topo | 26 px | não | `kickoff` (`Alt+F1`), `appmenu`, `panelspacer`, `pager` (número da área), `systemtray`, `digitalclock` |
 | Dock | baixo, centralizada, 300–700 px | 40 px | automático | `icontasks` |
 
 Antes havia só um painel embaixo, com 44 px, contendo `kickoff`, `pager`, `icontasks`, `marginsseparator`, `systemtray`, `digitalclock` e `minimizeall`. O script transforma esse painel na dock e cria a barra superior.
@@ -145,6 +145,18 @@ sudo apt install touchegg
 | 3 dedos para esquerda/direita | Próxima/anterior área de trabalho | Trocar de Space |
 | Pinça com 4 dedos | Lançador de aplicativos | Launchpad |
 | Abrir 4 dedos | Mostrar a área de trabalho | Mostrar mesa |
+
+Com 4 dedos, as passadas fazem o mesmo que com 3. O driver do trackpad (`bcm5974`) às vezes conta 3 dedos como 4, e antes disso a passada não fazia nada.
+
+Atalhos de teclado, como no macOS (nos apps gráficos o Toshy manda o Ctrl físico como Meta):
+
+| Tecla | Ação | Atalho no KDE |
+|---|---|---|
+| `Ctrl+←` / `Ctrl+→` | Área anterior / seguinte | `Meta+←/→` e `Meta+Ctrl+←/→` |
+| `Ctrl+↑` | Visão geral | `Meta+↑` e `Meta+W` |
+| `Ctrl+↓` | Janelas do app atual | `Meta+↓` e `Ctrl+F7` |
+
+Os atalhos de encaixar a janela na metade da tela (`Meta`+setas) ficam desligados. Ver também [problemas-conhecidos.md](problemas-conhecidos.md) (Toshy no Kubuntu).
 
 O script também cria 4 áreas de trabalho em uma linha (`kwinrc` → `[Desktops]` → `Number=4`, `Rows=1`), porque antes só havia uma. Para mudar: `DESKTOPS=6 ./scripts/80-gestos.sh`.
 

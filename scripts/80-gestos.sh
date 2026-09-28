@@ -25,6 +25,30 @@ while [ "$n" -lt "$DESKTOPS" ]; do
     n=$((n + 1))
 done
 
+# Ctrl+setas como no macOS. Nos apps gráficos o Toshy transforma o Ctrl físico
+# em Meta, e Meta+setas encaixava a janela na metade da tela; no terminal o
+# Toshy já manda Ctrl+Meta+esquerda/direita, que continuam valendo.
+log "Ctrl+setas: trocar de área, Visão geral e janelas do app"
+python3 - <<'PY'
+import dbus
+k = dbus.Interface(dbus.SessionBus().get_object("org.kde.kglobalaccel", "/kglobalaccel"),
+                   "org.kde.KGlobalAccel")
+META, CTRL = 0x10000000, 0x04000000
+LEFT, UP, RIGHT, DOWN, W, F7 = 0x01000012, 0x01000013, 0x01000014, 0x01000015, 0x57, 0x01000036
+shortcuts = {
+    "Window Quick Tile Left": [], "Window Quick Tile Right": [],
+    "Window Quick Tile Top": [], "Window Quick Tile Bottom": [],
+    "Switch One Desktop to the Left": [META | CTRL | LEFT, META | LEFT],
+    "Switch One Desktop to the Right": [META | CTRL | RIGHT, META | RIGHT],
+    "Overview": [META | W, META | UP],
+    "ExposeClass": [CTRL | F7, META | DOWN],
+}
+for action, keys in shortcuts.items():
+    k.setForeignShortcut(["kwin", action, "KWin", action], dbus.Array(keys, signature="i"))
+PY
+# Sem isso, as teclas novas ficam registradas mas não disparam no X11
+reconfigure_kwin
+
 if ! command -v touchegg >/dev/null; then
     log "touchegg não instalado; a configuração vale depois que você instalar."
 elif touchegg --help 2>&1 | grep -q -- --daemon; then

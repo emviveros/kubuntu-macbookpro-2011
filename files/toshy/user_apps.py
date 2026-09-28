@@ -24,3 +24,15 @@ keymap("User macOS Quick Look no Dolphin", {
     cnfg.screen_has_focus and
     matchProps(clas="^dolphin$|^org.kde.dolphin$")(ctx)
 )
+
+# Ctrl+←/→ trocam de área de trabalho. O bloco "GenGUI overrides: Ubuntu" do
+# Toshy só confere DISTRO_ID == 'ubuntu' e manda Meta+PgDown/PgUp, que no KDE
+# minimizam/maximizam a janela. Nos terminais o Ctrl chega como LC e o Toshy já
+# trata certo.
+keymap("User macOS Ctrl+setas no KDE", {
+    C("Super-Left"):            C("C-Super-Left"),                               # Área à esquerda
+    C("Super-Right"):           C("C-Super-Right"),                              # Área à direita
+}, when = lambda ctx:
+    cnfg.screen_has_focus and
+    not ctx_app_is_remote
+)

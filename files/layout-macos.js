@@ -31,6 +31,29 @@ if (!top) {
 }
 top.height = 26;
 
+// Um lançador recém-criado vem sem atalho; o padrão do KDE é Alt+F1
+top.widgets().forEach(function (w) {
+    if (w.type == "org.kde.plasma.kickoff" && !w.globalShortcut) w.globalShortcut = "Alt+F1";
+});
+
+// Indicador de áreas de trabalho antes da bandeja (sem ele, trocar de área
+// com o gesto de 3 dedos faz as janelas "sumirem" sem aviso)
+if (!hasWidget(top, "org.kde.plasma.pager")) {
+    var pager = top.addWidget("org.kde.plasma.pager");
+    pager.currentConfigGroup = ["General"];
+    pager.writeConfig("displayedText", 0); // número da área
+    pager.writeConfig("showWindowIcons", false);
+    // addWidget põe no fim; a ordem vale depois de reiniciar o plasmashell
+    var ids = top.widgets().map(function (w) { return w.id; });
+    var tray = top.widgets().filter(function (w) { return w.type == "org.kde.plasma.systemtray"; })[0];
+    if (tray) {
+        ids = ids.filter(function (id) { return id != pager.id; });
+        ids.splice(ids.indexOf(tray.id), 0, pager.id);
+        top.currentConfigGroup = ["General"];
+        top.writeConfig("AppletOrder", ids.join(";"));
+    }
+}
+
 if (!dock) {
     dock = new Panel("org.kde.panel");
     dock.location = "bottom";
