@@ -66,3 +66,4 @@ Para desfazer: `scripts/restore.sh ~/.config/backup-tela-<data>`
 - [docs/problemas-conhecidos.md](docs/problemas-conhecidos.md): o que deu errado e como resolver
 - [docs/outros-ambientes.md](docs/outros-ambientes.md): como adaptar para Plasma 6, Wayland, GNOME e XFCE
 - [docs/ajustes-manuais.md](docs/ajustes-manuais.md): o que precisa ser feito dentro de cada app
+- [memtest86/](memtest86/README.md): teste completo da RAM fora do sistema (MemTest86 no próximo boot, com relatório), fora do `apply.sh`

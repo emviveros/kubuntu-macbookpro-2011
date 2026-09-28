@@ -1,0 +1,29 @@
+#!/bin/sh
+# Gera o trecho do grub.cfg que inicia o MemTest86 UMA vez.
+# Instalado em /etc/grub.d/ por preparar.sh e removido por coletar.sh.
+#
+# A marca fica em /EFI/memtest86/grubenv na partição EFI (FAT), porque o GRUB
+# não consegue gravar no btrfs. A marca é zerada ANTES de iniciar o teste e
+# relida para confirmar a gravação: se o teste travar, o próximo boot é normal.
+cat <<'EOF'
+### memtest86 uma vez ###
+if search --no-floppy --set=mt86esp --file /EFI/memtest86/grubenv; then
+  load_env --file ($mt86esp)/EFI/memtest86/grubenv mt86_once
+  if [ "$mt86_once" = "1" ]; then
+    set mt86_once=0
+    set mt86_status=iniciado
+    save_env --file ($mt86esp)/EFI/memtest86/grubenv mt86_once mt86_status
+    load_env --file ($mt86esp)/EFI/memtest86/grubenv mt86_once
+    if [ "$mt86_once" = "0" ]; then
+      echo "Iniciando MemTest86..."
+      insmod fat
+      insmod chain
+      chainloader ($mt86esp)/EFI/memtest86/BOOTX64.efi
+      boot
+      set mt86_status=falhou-ao-iniciar
+      save_env --file ($mt86esp)/EFI/memtest86/grubenv mt86_status
+    fi
+  fi
+fi
+### fim memtest86 ###
+EOF

@@ -1,0 +1,3 @@
+# binários da PassMark (baixados por baixar.sh) e logs gerados pelos scripts
+bin/
+*.log
