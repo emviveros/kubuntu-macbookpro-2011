@@ -17,10 +17,13 @@ Se você é um agente de IA reinstalando isto, leia [AGENTS.md](AGENTS.md) prime
 
 - **Barra superior** de 26 px no estilo macOS: lançador, **Menu global** (os menus dos apps aparecem na barra), bandeja e relógio.
 - **Dock** embaixo só com os ícones das janelas, **oculta** até o mouse encostar na borda.
-- **Janelas maximizadas sem barra de título**. As não maximizadas têm botões pequenos, fonte do título de 8 pt e nenhuma borda.
+- **Barras de título compactas**: botões pequenos, fonte do título de 8 pt e nenhuma borda. As maximizadas mantêm a barra, para não perder fechar/minimizar.
 - **Fontes em 9 pt com DPI 88**, o que deixa o texto uns 20% menor que o padrão. Ícones das barras de ferramentas com 16 px.
 - **Dolphin** no modo Compacto em todas as pastas.
 - **Google Chrome** com escala 0.85.
+- **Teclado como no Mac** (Toshy): ⌘+C/V/Q/Tab, capturas com ⌘+Shift+3/4/5 e Quick Look no Dolphin. Os pré-requisitos pedem sudo; ver [docs/alteracoes.md](docs/alteracoes.md#7-teclado-estilo-macos-scripts70-teclado-macossh).
+- **Gestos do trackpad** estilo macOS: Mission Control, App Exposé, trocar de área de trabalho, Launchpad.
+- **Teclas de mídia** controlam o VLC, o YouTube e o YouTube Music.
 
 Os detalhes de cada item (valor anterior, valor novo, arquivo e caminho na interface) estão em [docs/alteracoes.md](docs/alteracoes.md).
 
@@ -39,14 +42,16 @@ Para desfazer: `scripts/restore.sh ~/.config/backup-tela-<data>`
 
 | Script | O que faz |
 |---|---|
-| `scripts/10-janelas.sh` | Barras de título compactas, janelas maximizadas sem barra de título |
+| `scripts/10-janelas.sh` | Barras de título compactas, sem bordas |
 | `scripts/20-fontes-dpi.sh` | Fontes 9 pt, DPI 88, ícones 16 px (KDE e GTK) |
 | `scripts/30-paineis-macos.sh` | Barra superior com Menu global + dock oculta; reinicia o plasmashell |
 | `scripts/40-menu-global-gtk.sh` | Apps GTK mandam o menu para a barra superior |
 | `scripts/50-dolphin.sh` | Dolphin no modo Compacto (feche o Dolphin antes) |
 | `scripts/60-chrome.sh` | Chrome com escala 0.85 (`CHROME_SCALE=0.9 ./scripts/60-chrome.sh` para mudar) |
+| `scripts/70-teclado-macos.sh` | Com o Toshy: ⌘ como no Mac, ⌘+Shift+3/4/5 para capturas, Espaço para pré-visualizar no Dolphin |
+| `scripts/80-gestos.sh` | Gestos de 3 e 4 dedos com o Touchégg 2.x, 4 áreas de trabalho |
 
-## Atalhos úteis com janelas sem barra de título
+## Atalhos úteis para janelas
 
 | Atalho | Ação |
 |---|---|

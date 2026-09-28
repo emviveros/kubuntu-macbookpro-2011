@@ -18,6 +18,9 @@ fi
 log "Itens que o backup não cobre (remova à mão se quiser desfazer):"
 echo "    ~/.config/plasma-workspace/env/appmenu-gtk.sh"
 echo "    ~/.local/share/applications/google-chrome.desktop e com.google.Chrome.desktop"
+echo "    ~/.local/bin/quicklook-dolphin e ~/.config/touchegg/touchegg.conf (se não havia antes)"
+echo "    Toshy: cd ~/.local/src/toshy && ./setup_toshy.py uninstall"
+echo "    Indexador: systemctl --user unmask tracker-miner-fs-3.service; rm ~/.config/autostart/tracker-miner-fs-3.desktop"
 
 reconfigure_kwin
 restart_plasmashell

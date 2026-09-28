@@ -37,7 +37,7 @@ qdbus org.kde.kglobalaccel /component/kmix org.kde.kglobalaccel.Component.isActi
 xrdb -query | grep dpi
 
 # Janelas e fontes
-kreadconfig5 --file kwinrc --group Windows --key BorderlessMaximizedWindows   # true
+kreadconfig5 --file kwinrc --group Windows --key BorderlessMaximizedWindows   # false
 kreadconfig5 --file kdeglobals --group General --key font                     # Noto Sans,9,...
 ```
 

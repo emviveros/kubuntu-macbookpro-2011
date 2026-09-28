@@ -43,3 +43,17 @@ Sobrou um processo do Chrome em segundo plano, então a nova escala não foi lid
 ## Dolphin volta ao modo antigo
 
 O Dolphin estava aberto quando a configuração mudou e sobrescreveu tudo ao fechar. Feche o Dolphin e rode `scripts/50-dolphin.sh` de novo.
+
+## O gnome-sushi traz o Nautilus e um indexador de arquivos
+
+**Sintoma:** depois de `sudo apt install gnome-sushi` aparecem o Nautilus ("Arquivos") no menu e o `tracker-miner-fs`, que indexa a pasta pessoal e gasta CPU e disco.
+
+**Causa:** no Ubuntu 24.04 o `gnome-sushi` depende do `nautilus`, e o `nautilus` depende do `tracker-miner-fs`. São dependências obrigatórias, então `--no-install-recommends` não resolve, e remover qualquer um deles remove o `gnome-sushi`. O autostart do indexador (`/etc/xdg/autostart/tracker-miner-fs-3.desktop`) vale também para o KDE.
+
+**Solução:** `scripts/70-teclado-macos.sh` mantém os pacotes, mas:
+- mascara o serviço: `systemctl --user mask tracker-miner-fs-3.service`;
+- desliga o autostart com `~/.config/autostart/tracker-miner-fs-3.desktop` (`Hidden=true`);
+- confirma o Dolphin como padrão para pastas: `xdg-mime default org.kde.dolphin.desktop inode/directory`.
+
+Verificar: `systemctl --user is-enabled tracker-miner-fs-3.service` deve responder `masked`, e `pgrep -a tracker` não deve mostrar nada.
+

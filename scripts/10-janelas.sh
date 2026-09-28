@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Barras de título compactas e janelas maximizadas sem barra de título
+# Barras de título compactas (mantidas nas janelas maximizadas)
 source "$(dirname "$0")/lib.sh"
 
 backup ~/.config/kwinrc ~/.config/breezerc ~/.config/kdeglobals
 
-log "Janelas maximizadas sem barra de título"
-$KWRITE --file kwinrc --group Windows --key BorderlessMaximizedWindows true
+# Sem barra de título ao maximizar some também fechar/minimizar/restaurar,
+# e o Plasma 5 não tem widget nativo que os leve para a barra superior.
+log "Janelas maximizadas mantêm a barra de título"
+$KWRITE --file kwinrc --group Windows --key BorderlessMaximizedWindows false
 
 log "Decoração Breeze: botões pequenos, sem bordas"
 $KWRITE --file breezerc --group Windeco --key ButtonSize ButtonSmall

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Quick Look no Dolphin: pré-visualiza o item selecionado com o sushi (gnome-sushi).
+# O Toshy chama este script ao apertar Espaço ou ⌘+Y numa janela do Dolphin.
+#
+# O Dolphin não informa a seleção por D-Bus, então o script manda Ctrl+C e lê o
+# endereço do arquivo na área de transferência, restaurando o conteúdo anterior depois.
+# Com --space: se nada foi copiado como arquivo (o foco está num campo de texto,
+# como renomear ou filtrar), digita o espaço normalmente.
+set -u
+
+sel=clipboard
+saved=$(mktemp)
+trap 'rm -f "$saved"' EXIT
+
+# Guarda o conteúdo atual no formato mais útil que estiver disponível
+targets=$(xclip -o -selection $sel -t TARGETS 2>/dev/null)
+old_type=
+for t in text/uri-list image/png UTF8_STRING text/plain; do
+    if grep -qx "$t" <<<"$targets"; then old_type=$t; break; fi
+done
+[ -n "$old_type" ] && xclip -o -selection $sel -t "$old_type" >"$saved" 2>/dev/null
+
+restore() {
+    if [ -n "$old_type" ]; then
+        xclip -i -selection $sel -t "$old_type" <"$saved"
+    else
+        xclip -i -selection $sel </dev/null
+    fi
+}
+
+# Marca a área de transferência para saber se o Ctrl+C copiou algo
+mark="quicklook-$$-$RANDOM"
+printf %s "$mark" | xclip -i -selection $sel
+xdotool key --clearmodifiers ctrl+c
+
+uri=
+for _ in $(seq 20); do
+    sleep 0.025
+    if xclip -o -selection $sel -t TARGETS 2>/dev/null | grep -qx text/uri-list; then
+        uri=$(xclip -o -selection $sel -t text/uri-list 2>/dev/null | tr -d '\r' | grep -m1 .)
+        break
+    fi
+    [ "$(xclip -o -selection $sel 2>/dev/null)" != "$mark" ] && break
+done
+
+restore
+
+if [ -n "$uri" ]; then
+    exec sushi "$uri"
+elif [ "${1:-}" = --space ]; then
+    xdotool key --clearmodifiers space
+fi
