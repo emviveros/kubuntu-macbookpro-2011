@@ -156,6 +156,10 @@ Atalhos de teclado, como no macOS (nos apps gráficos o Toshy manda o Ctrl físi
 | `Ctrl+↑` | Visão geral | `Meta+↑` e `Meta+W` |
 | `Ctrl+↓` | Janelas do app atual | `Meta+↓` e `Ctrl+F7` |
 
+Esses atalhos valem em qualquer app, inclusive no terminal, onde o Toshy mantém o Ctrl como Ctrl. `files/toshy/user_apps.py` trata as duas formas do Ctrl. Na primeira área, `Ctrl+←` não faz nada, e na última `Ctrl+→` também não, como no macOS.
+
+O `F4` (tecla Dashboard do MacBook 2011) abre o lançador de aplicativos, como o Launchpad. O Toshy transforma a tecla em `Alt+F1`, porque um segundo atalho gravado no KDE se perde quando o plasmashell reinicia.
+
 Os atalhos de encaixar a janela na metade da tela (`Meta`+setas) ficam desligados. Ver também [problemas-conhecidos.md](problemas-conhecidos.md) (Toshy no Kubuntu).
 
 O script também cria 4 áreas de trabalho em uma linha (`kwinrc` → `[Desktops]` → `Number=4`, `Rows=1`), porque antes só havia uma. Para mudar: `DESKTOPS=6 ./scripts/80-gestos.sh`.

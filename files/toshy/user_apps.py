@@ -25,13 +25,28 @@ keymap("User macOS Quick Look no Dolphin", {
     matchProps(clas="^dolphin$|^org.kde.dolphin$")(ctx)
 )
 
-# Ctrl+←/→ trocam de área de trabalho. O bloco "GenGUI overrides: Ubuntu" do
-# Toshy só confere DISTRO_ID == 'ubuntu' e manda Meta+PgDown/PgUp, que no KDE
-# minimizam/maximizam a janela. Nos terminais o Ctrl chega como LC e o Toshy já
-# trata certo.
-keymap("User macOS Ctrl+setas no KDE", {
+keymap("User macOS Launchpad", {
+    # F4 do MacBook 2011 (sem Fn) é a tecla Dashboard (KEY_DASHBOARD). O atalho
+    # extra que o KDE guarda para o lançador se perde quando o plasmashell reinicia.
+    C("Dashboard"):             C("Alt-F1"),                                     # F4: lançador de aplicativos
+}, when = lambda ctx:
+    cnfg.screen_has_focus and
+    not ctx_app_is_remote
+)
+
+# Ctrl+setas são atalhos do sistema, como no macOS, e valem em qualquer app.
+# O Ctrl físico chega como Super nos apps gráficos e como LC nos terminais, e
+# continua como LC se a tecla for apertada no terminal e a troca de área mudar o
+# foco. Por isso as duas formas. Sem isto, o bloco "GenGUI overrides: Ubuntu"
+# do Toshy (só confere DISTRO_ID == 'ubuntu') manda Meta+PgDown/PgUp, que no
+# KDE minimizam/maximizam a janela.
+keymap("User macOS Ctrl+setas", {
     C("Super-Left"):            C("C-Super-Left"),                               # Área à esquerda
     C("Super-Right"):           C("C-Super-Right"),                              # Área à direita
+    C("LC-Left"):               C("C-Super-Left"),
+    C("LC-Right"):              C("C-Super-Right"),
+    C("LC-Up"):                 C("Super-Up"),                                   # Visão geral
+    C("LC-Down"):               C("Super-Down"),                                 # Janelas do app
 }, when = lambda ctx:
     cnfg.screen_has_focus and
     not ctx_app_is_remote
