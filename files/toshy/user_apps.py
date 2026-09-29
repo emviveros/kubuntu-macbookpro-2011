@@ -39,6 +39,20 @@ keymap("User macOS Quick Look", {
     ctx_quicklook_origin(ctx)
 )
 
+# ⌘+Delete apaga até o começo da linha, como no macOS. O Toshy só faz isso no
+# Firefox e no Thunderbird; nos outros apps chegava como Ctrl+Backspace, que
+# apaga só a palavra anterior. Gerenciadores de arquivos e a Área de trabalho
+# (mover para a lixeira) e terminais (Ctrl+U) já têm regras próprias.
+keymap("User macOS ⌘+Delete em texto", {
+    C("RC-Backspace"):          [C("Shift-Home"), C("Backspace")],               # Apaga até o começo da linha
+}, when = lambda ctx:
+    cnfg.screen_has_focus and
+    not hmp_is_filemanager(ctx) and
+    not ctx_quicklook_origin(ctx) and
+    not ctx_app_is_terminal and
+    not ctx_app_is_remote
+)
+
 keymap("User macOS Launchpad", {
     # F4 do MacBook 2011 (sem Fn) é a tecla Dashboard (KEY_DASHBOARD). O atalho
     # extra que o KDE guarda para o lançador se perde quando o plasmashell reinicia.

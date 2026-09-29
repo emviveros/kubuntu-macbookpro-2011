@@ -127,7 +127,7 @@ O script insere dois trechos (`files/toshy/*.py`) nas *slices* `user_custom_func
 |---|---|---|
 | `Fn+Delete` | Apaga para a frente (Del) | Mover para a lixeira |
 | `Option+Delete` | Apaga a palavra anterior | — |
-| `⌘+Delete` | Apaga até o começo da linha | Mover para a lixeira |
+| `⌘+Delete` | Apaga até o começo da linha (vem deste repositório; o Toshy só fazia isso no Firefox e no Thunderbird) | Mover para a lixeira |
 | `⌘+Option+Delete` | — | Apagar de vez, com confirmação (vem deste repositório) |
 | `Ctrl+D` | Apaga para a frente (Del) | — |
 
