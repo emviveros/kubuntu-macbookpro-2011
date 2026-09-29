@@ -244,6 +244,34 @@ O atalho fica num script do KWin porque um comando novo no kglobalaccel (como em
 
 Para desfazer: `kpackagetool6 --type KWin/Script --remove brilho-tela` e, em *Configurações → Atalhos → Gerenciamento de energia*, devolva a tecla a *Reduzir o brilho da tela*.
 
+## 11. Google Antigravity (`scripts/90-antigravity.sh`)
+
+Os três produtos do Antigravity, lado a lado e sem sudo (no Ubuntu 26.04):
+
+| Comando | Produto | Onde fica | Atualização |
+|---|---|---|---|
+| `antigravity` | Antigravity 2.0 (app de agentes) | `~/.local/share/antigravity/app` | Rodar o script de novo com a URL nova |
+| `antigravity-ide` | Antigravity IDE (derivada do VS Code; `antigravity-ide .` abre a pasta) | `~/.local/share/antigravity/ide` | Rodar o script de novo com a URL nova |
+| `agy` | Antigravity CLI (agente no terminal) | `~/.local/bin/agy` | Sozinho, a cada uso |
+
+O repositório apt do Google (`antigravity-debian`) é legado e parou na versão 1.x. O app e a IDE vêm em tarball de https://antigravity.google/download. As URLs ficam no topo do script e podem ser trocadas sem editar o arquivo: `ANTIGRAVITY_APP_URL=... ANTIGRAVITY_IDE_URL=... ./apply.sh 90`. O script só baixa de novo o que mudou. O `agy` vem do instalador oficial (`https://antigravity.google/cli/install.sh`), que confere o SHA-512 do binário e acrescenta o `PATH` ao perfil do shell (por isso o backup de `~/.bashrc` e `~/.profile`).
+
+| Peça | O que faz |
+|---|---|
+| `~/.local/bin/antigravity` e `antigravity-ide` | Lançadores. Abrem com `FONTCONFIG_FILE=~/.config/antigravity/fonts.conf` e `UBUNTU_MENUPROXY=0` |
+| `~/.config/antigravity/fonts.conf` (cópia de `files/antigravity-fonts.conf`) | Mesmas fontes do sistema, com o cache em `~/.cache/antigravity-fontconfig` |
+| `~/.local/share/applications/antigravity.desktop` e `antigravity-ide.desktop` | Atalhos no menu, com ícones em `~/.local/share/icons/hicolor/512x512/apps/` |
+| `x-scheme-handler/antigravity` e `antigravity-ide` (`xdg-mime`) | O login do Google volta do navegador para o app certo |
+| `/etc/apparmor.d/antigravity` (cópia de `files/apparmor-antigravity`) | Só no Ubuntu 24.04: libera o `userns` do sandbox do Chromium. Pede a senha do sudo |
+
+**Cache de fontes:** o app e a IDE trazem um fontconfig embutido mais novo que o do sistema (2.17) e gravam `*.cache-11` no cache do usuário, o mesmo tipo de problema do Chrome 154 (ver [problemas-conhecidos.md](problemas-conhecidos.md)). Com o `fonts.conf` próprio, o cache deles vai para outra pasta e `~/.cache/fontconfig` fica só com `*.cache-9`. Conferido abrindo os dois: nenhum `cache-11` nem link no cache do sistema.
+
+**Menu global:** abrem com `UBUNTU_MENUPROXY=0`, como o Chrome, porque são Chromium e o `appmenu-gtk-module` derruba o Chrome. Os dois desenham os próprios menus, então não se perde nada.
+
+Na primeira abertura, cada um pede para entrar com a conta Google. O `agy` guarda a sessão no chaveiro do KDE (Secret Service).
+
+Para desfazer: `rm -rf ~/.local/share/antigravity ~/.config/antigravity ~/.cache/antigravity-fontconfig ~/.local/bin/{agy,antigravity,antigravity-ide} ~/.local/share/applications/antigravity{,-ide}.desktop ~/.local/share/icons/hicolor/512x512/apps/antigravity{,-ide}.png`. Os dados ficam em `~/.config/Antigravity`, `~/.antigravity-ide` e `~/.gemini`.
+
 ## Descartado
 
 - **Simular resolução maior** (`xrandr --output LVDS-1 --scale-from 1440x900`): funciona no Intel HD 3000, mas o texto fica borrado. Desfaz com `--scale 1x1`.

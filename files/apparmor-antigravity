@@ -1,0 +1,19 @@
+# Antigravity e Antigravity IDE (scripts/90-antigravity.sh), instalados em
+# ~/.local/share/antigravity. O sandbox do Chromium precisa de "userns", que o
+# Ubuntu 24.04 bloqueia em programas sem perfil no AppArmor.
+# Mesmo formato do perfil do GNOME Web (/etc/apparmor.d/epiphany).
+
+abi <abi/4.0>,
+include <tunables/global>
+
+profile antigravity @{HOME}/.local/share/antigravity/app/antigravity flags=(unconfined) {
+  userns,
+
+  include if exists <local/antigravity>
+}
+
+profile antigravity-ide @{HOME}/.local/share/antigravity/ide/antigravity-ide flags=(unconfined) {
+  userns,
+
+  include if exists <local/antigravity-ide>
+}

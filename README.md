@@ -55,6 +55,7 @@ Para desfazer: `scripts/restore.sh ~/.config/backup-tela-<data>`
 | `scripts/70-teclado-macos.sh` | Com o Toshy: ⌘ como no Mac, ⌘+Shift+3/4/5 para capturas, Espaço para pré-visualizar no Dolphin e na Área de trabalho |
 | `scripts/80-gestos.sh` | Gestos de 3 e 4 dedos (Touchégg 2.x no X11, script do KWin no Wayland), 4 áreas de trabalho |
 | `scripts/85-brilho.sh` | Plasma 6: a tecla de diminuir o brilho apaga a tela no mínimo |
+| `scripts/90-antigravity.sh` | Google Antigravity: app 2.0 (`antigravity`), IDE (`antigravity-ide`) e CLI (`agy`), sem estragar o cache de fontes do sistema |
 
 ## Atalhos úteis para janelas
 
