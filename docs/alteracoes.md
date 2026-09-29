@@ -140,13 +140,15 @@ O script insere dois trechos (`files/toshy/*.py`) nas *slices* `user_custom_func
 
 **Apagar sem tecla Del.** O MacBook não tem Del; a tecla "delete" é o Backspace do Linux. O `Fn+Backspace → Del` vem do driver `hid_apple`, e o restante vem do Toshy, a não ser onde a tabela indica outra origem:
 
-| Atalho | Em texto | No Dolphin |
+| Atalho | Em texto | No Dolphin e na Área de trabalho |
 |---|---|---|
 | `Fn+Delete` | Apaga para a frente (Del) | Mover para a lixeira |
 | `Option+Delete` | Apaga a palavra anterior | — |
-| `⌘+Delete` | Apaga até o começo da linha (vem deste repositório; o Toshy só fazia isso no Firefox e no Thunderbird) | Mover para a lixeira |
+| `⌘+Delete` | Apaga até o começo da linha (vem deste repositório; o Toshy só fazia isso no Firefox e no Thunderbird) | Mover para a lixeira (na Área de trabalho, vem deste repositório: o Toshy não a trata como gerenciador de arquivos) |
 | `⌘+Option+Delete` | — | Apagar de vez, com confirmação (vem deste repositório) |
 | `Ctrl+D` | Apaga para a frente (Del) | — |
+
+**Copiar o caminho, como no Finder.** `⌥⌘C` no Dolphin e na Área de trabalho copia o caminho dos itens selecionados em texto, um por linha (por exemplo `/home/usuario/Documentos/relatório final.pdf`). A função `km_copiar_caminho` (`files/toshy/user_custom_functions.py`) manda Ctrl+C, lê os endereços `file://` pelo Klipper e grava os caminhos no lugar deles. Se nada foi copiado como arquivo (renomeando, filtrando), devolve o que havia antes na área de transferência.
 
 No terminal, `⌘+Delete` apaga até o começo da linha (`Ctrl+U`) e `Option+Delete` apaga a palavra anterior (`Ctrl+W`).
 
@@ -162,7 +164,7 @@ No terminal, `⌘+Delete` apaga até o começo da linha (`Ctrl+U`) e `Option+Del
 
 Com a pré-visualização aberta, cada seta vai ao Dolphin seguida de Ctrl+C, e `quicklook-wayland --sync` mostra o novo arquivo. O script do KWin `quicklook` (`files/kwin-quicklook`) mantém a janela do sushi por cima e devolve o foco ao Dolphin sempre que ela o toma. Quando ela fecha, por qualquer meio, ele inicia `quicklook-fechou.service` (`~/.config/systemd/user/`), que restaura a área de transferência. Só texto volta à área de transferência: se havia uma imagem copiada, ela continua no histórico do Klipper. O sushi 50 não tem mais o problema de parar de abrir depois de fechar, então o serviço não é reiniciado.
 
-Na Área de trabalho do Plasma 6 em Wayland, o Ctrl+C não copia os arquivos selecionados (nada chega à área de transferência), e o Espaço lá é só digitado. Ver [problemas-conhecidos.md](problemas-conhecidos.md).
+Na Área de trabalho do Plasma 6.6 em Wayland, o Ctrl+C copia os arquivos selecionados (conferido em 29/09/2026: chegam como `file://` ao Klipper). Uma nota antiga dizia o contrário, e a pré-visualização lá ainda não foi testada de novo.
 
 Para desfazer: apague o trecho entre as marcas e rode `toshy-services-restart`. No Wayland, também: `kpackagetool6 --type KWin/Script --remove quicklook`. Para remover o Toshy: `cd ~/.local/src/toshy && ./setup_toshy.py uninstall`.
 
@@ -215,7 +217,7 @@ Atalhos de teclado, como no macOS (nos apps gráficos o Toshy manda o Ctrl físi
 
 Esses atalhos valem em qualquer app, inclusive no terminal, onde o Toshy mantém o Ctrl como Ctrl. `files/toshy/user_apps.py` trata as duas formas do Ctrl. Na primeira área, `Ctrl+←` não faz nada, e na última `Ctrl+→` também não, como no macOS.
 
-O `F4` (tecla Dashboard do MacBook 2011) abre o lançador de aplicativos, como o Launchpad. O Toshy transforma a tecla em `Alt+F1`, porque um segundo atalho gravado no KDE se perde quando o plasmashell reinicia.
+O `F3` (tecla Scale do MacBook 2011) abre a Visão geral, como o Mission Control e como os 4 dedos para cima: o Toshy a transforma em `Meta+W`, porque o KDE não tem atalho para essa tecla. O `F4` (tecla Dashboard) abre o lançador de aplicativos, como o Launchpad. O Toshy transforma a tecla em `Alt+F1`, porque um segundo atalho gravado no KDE se perde quando o plasmashell reinicia.
 
 Os atalhos de encaixar a janela na metade da tela (`Meta`+setas) ficam desligados. Ver também [problemas-conhecidos.md](problemas-conhecidos.md) (Toshy no Kubuntu).
 

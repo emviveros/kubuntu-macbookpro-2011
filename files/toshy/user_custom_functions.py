@@ -47,6 +47,44 @@ def km_screenshot(*args):
 
 _quicklook_last = 0.0
 
+def km_copiar_caminho():
+    """⌥⌘C como no Finder: copia o caminho dos itens selecionados, um por linha.
+
+    Manda Ctrl+C à janela em foco (Dolphin ou Área de trabalho), lê os endereços
+    file:// pelo Klipper e grava no lugar deles os caminhos em texto. Se nada foi
+    copiado como arquivo (renomeando, filtrando), devolve o que havia antes.
+    """
+    def _km_copiar_caminho(ctx):
+        import dbus
+        from urllib.parse import unquote, urlparse
+        try:
+            klipper = dbus.Interface(dbus.SessionBus().get_object('org.kde.klipper', '/klipper'),
+                                     'org.kde.klipper.klipper')
+            before = str(klipper.getClipboardContents())
+            klipper.clearClipboardContents()
+        except Exception as e:
+            error(f'Copiar caminho: Klipper indisponível: {e}')
+            return None
+
+        def _after_copy(ctx):
+            import time
+            text = ''
+            for _ in range(12):
+                time.sleep(0.025)
+                text = str(klipper.getClipboardContents())
+                if text:
+                    break
+            uris = text.split()
+            if uris and all(u.startswith('file://') for u in uris):
+                klipper.setClipboardContents('\n'.join(unquote(urlparse(u).path) for u in uris))
+            elif before:
+                klipper.setClipboardContents(before)
+            return None
+
+        return [C("C-c"), _after_copy]
+    return _km_copiar_caminho
+
+
 def km_quicklook_wl(space=False):
     """Quick Look no Wayland: abre ou fecha a pré-visualização do item selecionado.
 

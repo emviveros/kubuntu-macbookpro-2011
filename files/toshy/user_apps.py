@@ -45,6 +45,8 @@ keymap("User macOS Quick Look aberto", {
 keymap("User macOS Quick Look", {
     C("Space"):                 _ql_espaco,                                      # Espaço: pré-visualizar/fechar
     C("RC-y"):                  _ql_cmd_y,                                       # ⌘+Y: pré-visualizar/fechar
+    C("RC-Backspace"):          C("Delete"),                                     # ⌘+Delete: mover para a lixeira
+    C("Alt-RC-c"):              km_copiar_caminho(),                             # ⌥⌘C: copiar o caminho
     C("Alt-RC-Backspace"):      C("Shift-Delete"),                               # ⌘+Option+Delete: apagar de vez
 }, when = lambda ctx:
     cnfg.screen_has_focus and
@@ -53,8 +55,9 @@ keymap("User macOS Quick Look", {
 
 # ⌘+Delete apaga até o começo da linha, como no macOS. O Toshy só faz isso no
 # Firefox e no Thunderbird; nos outros apps chegava como Ctrl+Backspace, que
-# apaga só a palavra anterior. Gerenciadores de arquivos e a Área de trabalho
-# (mover para a lixeira) e terminais (Ctrl+U) já têm regras próprias.
+# apaga só a palavra anterior. No Dolphin e na Área de trabalho ele manda para a
+# lixeira (bloco acima; o Toshy não trata a Área de trabalho como gerenciador de
+# arquivos), e nos terminais o Toshy já manda Ctrl+U.
 keymap("User macOS ⌘+Delete em texto", {
     C("RC-Backspace"):          [C("Shift-Home"), C("Backspace")],               # Apaga até o começo da linha
 }, when = lambda ctx:
@@ -74,9 +77,11 @@ keymap("User macOS teclas de mídia", {
     cnfg.screen_has_focus
 )
 
-keymap("User macOS Launchpad", {
-    # F4 do MacBook 2011 (sem Fn) é a tecla Dashboard (KEY_DASHBOARD). O atalho
-    # extra que o KDE guarda para o lançador se perde quando o plasmashell reinicia.
+keymap("User macOS Mission Control e Launchpad", {
+    # F3 e F4 do MacBook 2011 (sem Fn) são as teclas Scale (KEY_SCALE) e
+    # Dashboard (KEY_DASHBOARD). O KDE não tem atalho para a Scale, e o atalho
+    # extra que ele guarda para o lançador se perde quando o plasmashell reinicia.
+    C("Scale"):                 C("Super-w"),                                    # F3: Visão geral (4 dedos para cima)
     C("Dashboard"):             C("Alt-F1"),                                     # F4: lançador de aplicativos
 }, when = lambda ctx:
     cnfg.screen_has_focus and

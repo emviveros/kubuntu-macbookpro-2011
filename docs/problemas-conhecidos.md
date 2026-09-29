@@ -134,7 +134,7 @@ O caminho que funciona está em [alteracoes.md](alteracoes.md#7-teclado-estilo-m
 
 - **`wl-paste` rouba o foco:** o `wl-clipboard` 2.2.1 do Ubuntu 26.04 não conhece o protocolo `ext_data_control_v1`, o único que o KWin 6.6 oferece. Para ler, ele abre uma janela invisível, que tira o foco do Dolphin. Por isso a leitura é pelo Klipper (`org.kde.klipper /klipper getClipboardContents`), que devolve o `file://` do arquivo copiado.
 - **Copiar pelo D-Bus não funciona:** a ação `edit_copy` do Dolphin, chamada por D-Bus, não chega à área de transferência. O Wayland só aceita a cópia depois de uma tecla de verdade, por isso o Ctrl+C sai do Toshy.
-- **Área de trabalho:** no Plasma 6.6 em Wayland, Ctrl+C nos ícones da Área de trabalho não copia nada (conferido pelo Klipper e pelo `wl-paste`). Lá o Quick Look não tem como saber o arquivo selecionado, e o Espaço é digitado normalmente, com até 0,3 s de atraso.
+- **Área de trabalho:** num teste anterior, Ctrl+C nos ícones da Área de trabalho não copiava nada no Plasma 6.6 em Wayland. Em 29/09/2026 copiou: com o foco na Área de trabalho, Ctrl+A e Ctrl+C deixaram os `file://` no Klipper, e o `⌥⌘C` (copiar caminho) funciona lá. O Quick Look na Área de trabalho não foi testado de novo.
 - **Janela da Área de trabalho no Toshy:** no Wayland ela é `plasmashell` sem título, e o Toshy troca o título vazio por `ERR: KeyContext: NoneType in wm_name`. O `matchProps(name="^$")` nunca casa; a função compara direto.
 - **Foco:** a pré-visualização do sushi toma o foco ao abrir e a cada arquivo novo. O `ShowFile` do sushi 50 pede uma janela-mãe no formato `wayland:<handle>` (xdg-foreign), que um script de terminal não tem. O script do KWin `quicklook` devolve o foco à janela de origem.
 
