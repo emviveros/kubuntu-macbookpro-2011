@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# F7/F9 (anterior/próxima): troca de faixa quando o player oferece, senão volta
+# ou avança 10 s. Um vídeo avulso do YouTube não tem anterior/próxima, e as
+# teclas não faziam nada. O Toshy chama este script no lugar das teclas.
+#   midia-pular previous|next
+set -u
+
+dir=${1:-next}
+STEP=10000000   # 10 s em microssegundos (unidade do MPRIS)
+
+prop() {  # serviço, propriedade → valor sem a embalagem do GVariant
+    gdbus call --session --dest "$1" --object-path /org/mpris/MediaPlayer2 \
+        --method org.freedesktop.DBus.Properties.Get org.mpris.MediaPlayer2.Player "$2" 2>/dev/null |
+        sed -E "s/^\(<'?//; s/'?>,\)$//"
+}
+
+players=$(gdbus call --session --dest org.freedesktop.DBus --object-path /org/freedesktop/DBus \
+    --method org.freedesktop.DBus.ListNames | grep -o "org\.mpris\.MediaPlayer2\.[^']*")
+[ -z "$players" ] && exit 0
+
+# O Chrome aparece duas vezes (o próprio e o plasma-browser-integration); o
+# segundo é o que o KDE usa. Prefere o player que está tocando.
+if grep -q plasma-browser-integration <<<"$players"; then
+    players=$(grep -v "chromium\.instance" <<<"$players")
+fi
+player=
+for p in $players; do
+    [ "$(prop "$p" PlaybackStatus)" = Playing ] && { player=$p; break; }
+done
+[ -z "$player" ] && player=$(head -1 <<<"$players")
+
+call() {
+    gdbus call --session --dest "$player" --object-path /org/mpris/MediaPlayer2 \
+        --method "org.mpris.MediaPlayer2.Player.$1" "${@:2}" >/dev/null 2>&1
+}
+
+if [ "$dir" = previous ]; then
+    if [ "$(prop "$player" CanGoPrevious)" = true ]; then call Previous; else call Seek -- "-$STEP"; fi
+else
+    if [ "$(prop "$player" CanGoNext)" = true ]; then call Next; else call Seek "$STEP"; fi
+fi

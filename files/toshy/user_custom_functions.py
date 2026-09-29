@@ -1,6 +1,7 @@
 # Funções usadas pelos atalhos estilo macOS (scripts/70-teclado-macos.sh)
 
 QUICKLOOK_CMD = os.path.expanduser('~/.local/bin/quicklook-dolphin')
+MIDIA_PULAR_CMD = os.path.expanduser('~/.local/bin/midia-pular')
 # Existe enquanto a pré-visualização está aberta (criado e apagado pelo script)
 QUICKLOOK_OPEN = os.path.join(os.environ.get('XDG_RUNTIME_DIR', '/tmp'), 'quicklook-dolphin.open')
 

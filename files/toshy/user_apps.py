@@ -53,6 +53,15 @@ keymap("User macOS ⌘+Delete em texto", {
     not ctx_app_is_remote
 )
 
+# F7/F9: faixa anterior/próxima quando o player oferece; senão volta/avança 10 s
+# (vídeo avulso do YouTube). Substitui o tratamento do KDE para essas teclas.
+keymap("User macOS teclas de mídia", {
+    C("PreviousSong"):          km_run([MIDIA_PULAR_CMD, 'previous']),            # F7
+    C("NextSong"):              km_run([MIDIA_PULAR_CMD, 'next']),                # F9
+}, when = lambda ctx:
+    cnfg.screen_has_focus
+)
+
 keymap("User macOS Launchpad", {
     # F4 do MacBook 2011 (sem Fn) é a tecla Dashboard (KEY_DASHBOARD). O atalho
     # extra que o KDE guarda para o lançador se perde quando o plasmashell reinicia.

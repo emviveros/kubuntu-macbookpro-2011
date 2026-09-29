@@ -23,7 +23,7 @@ Se você é um agente de IA reinstalando isto, leia [AGENTS.md](AGENTS.md) prime
 - **Google Chrome** com escala 0.85.
 - **Teclado como no Mac** (Toshy): ⌘+C/V/Q/Tab, capturas com ⌘+Shift+3/4/5 e Quick Look (Espaço) no Dolphin e na Área de trabalho, navegando com as setas. Os pré-requisitos são instalados por `scripts/00-pacotes.sh`; ver [docs/alteracoes.md](docs/alteracoes.md#7-teclado-estilo-macos-scripts70-teclado-macossh).
 - **Gestos do trackpad** estilo macOS: Mission Control, App Exposé, trocar de área de trabalho, Launchpad.
-- **Teclas de mídia** controlam o VLC, o YouTube e o YouTube Music.
+- **Teclas de mídia** controlam o VLC, o YouTube e o YouTube Music. Num vídeo avulso, F7/F9 voltam/avançam 10 s.
 
 Os detalhes de cada item (valor anterior, valor novo, arquivo e caminho na interface) estão em [docs/alteracoes.md](docs/alteracoes.md).
 

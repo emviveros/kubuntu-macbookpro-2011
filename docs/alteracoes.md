@@ -139,12 +139,23 @@ No terminal, `⌘+Delete` apaga até o começo da linha (`Ctrl+U`) e `Option+Del
 
 Para desfazer: apague o trecho entre as marcas e rode `toshy-services-restart`. Para remover o Toshy: `cd ~/.local/src/toshy && ./setup_toshy.py uninstall`.
 
-## 8. Mídia (sem script)
+## 8. Mídia (`files/midia-pular`, instalado por `scripts/70-teclado-macos.sh`)
 
 As teclas F7/F8/F9 (anterior/tocar/próxima) e o controlador de mídia da bandeja usam MPRIS, que já funciona nos casos abaixo:
 
 - **VLC** (`sudo apt install vlc`): expõe MPRIS sozinho.
 - **YouTube e YouTube Music no Chrome**: precisam da extensão *Plasma Integration*, que já está instalada, e do pacote `plasma-browser-integration`. Com mais de uma fonte tocando, as teclas controlam a última que começou.
+
+O F8 fica com o KDE. O F7 e o F9 são tratados pelo Toshy, que chama `~/.local/bin/midia-pular previous|next`:
+
+| Situação | F7 | F9 |
+|---|---|---|
+| O player tem faixa anterior/próxima (playlist, YouTube Music, VLC com fila) | Faixa anterior | Próxima faixa |
+| Não tem (vídeo avulso do YouTube, `CanGoPrevious`/`CanGoNext` falsos) | Volta 10 s | Avança 10 s |
+
+O script usa o player que está tocando. O Chrome aparece duas vezes no MPRIS (`chromium.instance…` e `plasma-browser-integration`), e o script usa o segundo, como o KDE.
+
+O widget *Reprodução de mídia* da bandeja só é carregado quando um player aparece. Antes disso, o componente `mediacontrol` não existe no kglobalaccel, e isso é normal.
 
 ## 9. Gestos do trackpad (`scripts/80-gestos.sh` + `files/touchegg.conf`)
 

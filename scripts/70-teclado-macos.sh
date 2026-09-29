@@ -31,8 +31,9 @@ if [ "$(xdg-mime query default inode/directory)" != org.kde.dolphin.desktop ]; t
     xdg-mime default org.kde.dolphin.desktop inode/directory
 fi
 
-log "Instalando ~/.local/bin/quicklook-dolphin"
+log "Instalando ~/.local/bin/quicklook-dolphin e ~/.local/bin/midia-pular"
 install -Dm755 "$REPO_DIR/files/quicklook-dolphin" ~/.local/bin/quicklook-dolphin
+install -Dm755 "$REPO_DIR/files/midia-pular" ~/.local/bin/midia-pular
 
 # Sem este perfil, pré-visualizar HTML derruba o serviço do sushi (o sandbox do
 # WebKit precisa de "userns", bloqueado pelo AppArmor do Ubuntu 24.04).
