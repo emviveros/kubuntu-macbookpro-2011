@@ -10,7 +10,8 @@ if [ ! -f "$CFG" ]; then
     log "Toshy não instalado ($CFG não existe); pulando. Veja docs/alteracoes.md."
     exit 0
 fi
-for c in sushi xclip xdotool; do
+if is_wayland; then TOOLS="sushi"; else TOOLS="sushi xclip xdotool"; fi
+for c in $TOOLS; do
     command -v $c >/dev/null || log "Aviso: '$c' não instalado; a pré-visualização no Dolphin não vai funcionar."
 done
 
@@ -31,14 +32,29 @@ if [ "$(xdg-mime query default inode/directory)" != org.kde.dolphin.desktop ]; t
     xdg-mime default org.kde.dolphin.desktop inode/directory
 fi
 
-log "Instalando ~/.local/bin/quicklook-dolphin e ~/.local/bin/midia-pular"
+log "Instalando ~/.local/bin/quicklook-dolphin, quicklook-wayland e midia-pular"
 install -Dm755 "$REPO_DIR/files/quicklook-dolphin" ~/.local/bin/quicklook-dolphin
+install -Dm755 "$REPO_DIR/files/quicklook-wayland" ~/.local/bin/quicklook-wayland
 install -Dm755 "$REPO_DIR/files/midia-pular" ~/.local/bin/midia-pular
 
+# No Wayland, um script do KWin mantém a pré-visualização por cima e o foco na
+# janela de origem, e avisa quando ela fecha (ver files/quicklook-wayland)
+if is_wayland; then
+    log "Instalando o script do KWin quicklook e o serviço quicklook-fechou"
+    install -Dm644 "$REPO_DIR/files/quicklook-fechou.service" ~/.config/systemd/user/quicklook-fechou.service
+    systemctl --user daemon-reload
+    kpackagetool6 --type KWin/Script --upgrade "$REPO_DIR/files/kwin-quicklook" >/dev/null 2>&1 ||
+        kpackagetool6 --type KWin/Script --install "$REPO_DIR/files/kwin-quicklook" >/dev/null
+    $KWRITE --file kwinrc --group Plugins --key quicklookEnabled true
+    reconfigure_kwin
+fi
+
 # Sem este perfil, pré-visualizar HTML derruba o serviço do sushi (o sandbox do
-# WebKit precisa de "userns", bloqueado pelo AppArmor do Ubuntu 24.04).
+# WebKit precisa de "userns", bloqueado pelo AppArmor do Ubuntu 24.04). Onde a
+# restrição está desligada (Ubuntu 26.04), não precisa.
 PROFILE=/etc/apparmor.d/nautilus-previewer
-if [ -d /etc/apparmor.d ] && ! cmp -s "$REPO_DIR/files/apparmor-nautilus-previewer" "$PROFILE"; then
+if [ "$(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null)" = 1 ] &&
+   [ -d /etc/apparmor.d ] && ! cmp -s "$REPO_DIR/files/apparmor-nautilus-previewer" "$PROFILE"; then
     log "Instalando o perfil AppArmor $PROFILE (pede a senha do sudo)"
     sudo install -m644 "$REPO_DIR/files/apparmor-nautilus-previewer" "$PROFILE" &&
         sudo apparmor_parser -r "$PROFILE" ||

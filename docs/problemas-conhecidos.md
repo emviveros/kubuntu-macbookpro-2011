@@ -15,6 +15,24 @@ timeout 15 env UBUNTU_MENUPROXY=0 /opt/google/chrome/chrome --user-data-dir=/tmp
 
 **Solução:** abrir o Chrome com `env UBUNTU_MENUPROXY=0`, o que já é feito em `scripts/60-chrome.sh`. O Chrome não usa barra de menus, então não se perde nada.
 
+## Plasma cai em loop depois de abrir o Chrome (cache de fontes)
+
+**Sintoma:** ao reiniciar o plasmashell (ou no login seguinte), ele cai logo ao abrir e o Gerenciador de Falhas aparece várias vezes. A barra superior e a dock somem.
+
+**Causa:** o Chrome 154 traz um fontconfig mais novo. Ao abrir, ele grava em `~/.cache/fontconfig` arquivos `*.cache-12` e troca os `*.cache-9` do fontconfig do sistema (2.17) por links para eles. O fontconfig do sistema lê o formato errado: `fc-match "Noto Sans"` passa a devolver `KaTeX_AMS-Regular.woff: "Noto Sans" "<unknown style>"`, e o plasmashell cai em `FcCharSetHasChar` ao desenhar o primeiro texto (`coredumpctl info plasmashell`). Apps que já estavam abertos não são afetados, por isso o problema só aparece no próximo início.
+
+**Diagnóstico:**
+```bash
+fc-match "Noto Sans"                       # esperado: NotoSans-Regular.ttf: "Noto Sans" "Regular"
+ls -la ~/.cache/fontconfig | grep -c '\-> .*cache-12'   # esperado: 0
+```
+
+**Solução:** `scripts/60-chrome.sh` abre o Chrome com `XDG_CACHE_HOME` próprio e instala `fontconfig-cache-guard.sh`, que limpa o cache no login. À mão:
+```bash
+find ~/.cache/fontconfig -maxdepth 1 \( -type l -name '*.cache-*' -o -name '*.cache-1[0-9]' \) -delete
+fc-cache -f && kstart plasmashell
+```
+
 ## Teclas de volume param de funcionar depois de mudar os painéis
 
 **Sintoma:** as teclas de volume do teclado não fazem nada.
@@ -83,3 +101,55 @@ Verificar: `systemctl --user is-enabled tracker-miner-fs-3.service` deve respond
 Não funcionou: tirar o foco da pré-visualização para mandar a seta ao Dolphin (o Dolphin ignora teclas enviadas sem foco, e a troca leva ~0,35 s, perdendo teclas) e selecionar com `org.freedesktop.FileManager1.ShowItems` (puxa o foco para o Dolphin).
 
 Verificar: com uma pré-visualização aberta, `cat /proc/$(pgrep -f "^/usr/bin/gjs /usr/libexec/org.gnome.NautilusPreviewer")/attr/current` deve mostrar `nautilus-previewer (unconfined)`.
+
+## Plasma 6 (Wayland): dock da largura da tela
+
+**Sintoma:** depois de `scripts/30-paineis-macos.sh`, a dock ocupa a largura toda da tela.
+
+**Causa:** no Plasma 6 o painel tem `lengthMode`, e com o padrão (`"fill"`) os limites `minimumLength`/`maximumLength` são ignorados.
+
+**Solução:** `files/layout-macos.js` usa `lengthMode = "fit"` (*Ajustar ao conteúdo*) quando a propriedade existe.
+
+## Plasma 6: brilho no mínimo não apaga a tela
+
+**Sintoma:** com o brilho no mínimo a tela fica fraca, mas acesa. No Plasma 5 ela apagava.
+
+**Causa:** no Plasma 6 o KWin controla a luz de fundo e nunca grava 0. Neste MacBook o kernel 7.0 registra só a interface `acpi_video0` (`i915: Skipping intel_backlight registration`), de 0 a 15, e o KWin para no 1.
+
+**Diagnóstico:** `cat /sys/class/backlight/*/brightness` com o brilho no mínimo mostra 1.
+
+**Solução:** `scripts/85-brilho.sh` (ver [alteracoes.md](alteracoes.md#10-brilho-no-mínimo-apaga-a-tela-scripts85-brilhosh-só-plasma-6)). Um comando novo no kglobalaccel não funcionou: o atalho ficou registrado, mas inativo, e a tecla parou de fazer qualquer coisa. No Wayland o kglobalaccel roda dentro do KWin e só carrega comandos novos ao iniciar a sessão. Por isso a tecla fica com um script do KWin.
+
+## Dolphin 25: volta ao modo Ícones
+
+**Sintoma:** o `scripts/50-dolphin.sh` roda, mas o Dolphin continua no modo Ícones, e o `.directory` que o script criou some.
+
+**Causa:** do Dolphin 24.08 em diante o modo fica num atributo estendido da pasta (`user.kde.fm.viewproperties#1`). O Dolphin apaga o `.directory` sem ler, e sem `Version=4` o conteúdo também é ignorado.
+
+**Solução:** o script grava o atributo com `Version=4`. Para descobrir o formato, o modo foi trocado pelas ações do próprio Dolphin por D-Bus (`qdbus6 org.kde.dolphin-<pid> /dolphin/Dolphin_1/actions/compact org.qtproject.Qt.QAction.trigger`) e o atributo foi lido com `os.getxattr`.
+
+## Quick Look no Wayland
+
+O caminho que funciona está em [alteracoes.md](alteracoes.md#7-teclado-estilo-macos-scripts70-teclado-macossh). O que não funcionou ou atrapalhou:
+
+- **`wl-paste` rouba o foco:** o `wl-clipboard` 2.2.1 do Ubuntu 26.04 não conhece o protocolo `ext_data_control_v1`, o único que o KWin 6.6 oferece. Para ler, ele abre uma janela invisível, que tira o foco do Dolphin. Por isso a leitura é pelo Klipper (`org.kde.klipper /klipper getClipboardContents`), que devolve o `file://` do arquivo copiado.
+- **Copiar pelo D-Bus não funciona:** a ação `edit_copy` do Dolphin, chamada por D-Bus, não chega à área de transferência. O Wayland só aceita a cópia depois de uma tecla de verdade, por isso o Ctrl+C sai do Toshy.
+- **Área de trabalho:** no Plasma 6.6 em Wayland, Ctrl+C nos ícones da Área de trabalho não copia nada (conferido pelo Klipper e pelo `wl-paste`). Lá o Quick Look não tem como saber o arquivo selecionado, e o Espaço é digitado normalmente, com até 0,3 s de atraso.
+- **Janela da Área de trabalho no Toshy:** no Wayland ela é `plasmashell` sem título, e o Toshy troca o título vazio por `ERR: KeyContext: NoneType in wm_name`. O `matchProps(name="^$")` nunca casa; a função compara direto.
+- **Foco:** a pré-visualização do sushi toma o foco ao abrir e a cada arquivo novo. O `ShowFile` do sushi 50 pede uma janela-mãe no formato `wayland:<handle>` (xdg-foreign), que um script de terminal não tem. O script do KWin `quicklook` devolve o foco à janela de origem.
+
+**Testar sem mexer no teclado:** com o Toshy instalado, o usuário tem acesso a `/dev/uinput`. Um teclado virtual criado com `python-evdev` (o Python de `~/.config/toshy/.venv`) passa pelo Toshy como um teclado de verdade, mas o Toshy leva cerca de 2 s para pegar um teclado novo. Ele é tratado como teclado de PC: o ⌘ fica no Alt.
+
+## Scripts do KWin: correção não vale na mesma sessão
+
+**Sintoma:** depois de corrigir o QML de um script do KWin e rodar `kpackagetool6 --upgrade`, o log continua mostrando o erro da versão antiga (`journalctl --user | grep kwin_scripting`).
+
+**Causa:** o KWin guarda em cache o componente QML já carregado.
+
+**Solução:** reiniciar a sessão. Para testar antes, carregue uma cópia com outro nome: `qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadDeclarativeScript <arquivo.qml> <nome>` e depois `org.kde.kwin.Scripting.start`.
+
+Outra armadilha: o `DBusCall` do QML manda um array JavaScript como lista de variantes, e um método que espera `QStringList` recusa a chamada sem aviso. Guarde a lista numa propriedade `list<string>` antes de passar.
+
+## Menu global vazio num app já aberto
+
+Um app aberto antes da barra superior ganhar o Menu global continua com o menu dentro da janela. Feche e abra o app de novo.

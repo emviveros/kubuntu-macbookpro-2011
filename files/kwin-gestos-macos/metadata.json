@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Authors": [{ "Name": "kubuntu-macbookpro-2011" }],
+        "Description": "Gestos de 3 e 4 dedos no trackpad como no macOS (scripts/80-gestos.sh)",
+        "EnabledByDefault": true,
+        "Icon": "input-touchpad",
+        "Id": "gestos-macos",
+        "License": "GPL",
+        "Name": "Gestos estilo macOS"
+    },
+    "X-Plasma-API": "declarativescript"
+}

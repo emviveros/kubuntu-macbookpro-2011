@@ -1,19 +1,24 @@
 # Adaptar para outros ambientes
 
-A especificação do resultado desejado está em [alteracoes.md](alteracoes.md). Aqui estão os equivalentes conhecidos fora do ambiente de referência (Plasma 5.27 em X11). **Os itens abaixo não foram testados nesta máquina.** Confira os nomes de chaves e pacotes na versão instalada antes de aplicar.
+A especificação do resultado desejado está em [alteracoes.md](alteracoes.md). Aqui estão as diferenças entre os dois ambientes em que os scripts foram usados e os equivalentes em outros desktops. **As seções de GNOME e XFCE não foram testadas nesta máquina:** confira os nomes de chaves e pacotes na versão instalada antes de aplicar.
 
-## KDE Plasma 6 (Kubuntu 25.04 em diante)
+## Plasma 5 (X11) × Plasma 6 (Wayland)
 
-- **Ferramentas:** `kwriteconfig6`, `kreadconfig6`, `qdbus6`, `kquitapp6`, `kstart`. O `scripts/lib.sh` detecta isso sozinho.
-- **Janelas, fontes e Dolphin:** usam os mesmos arquivos e chaves; devem funcionar como estão.
-- **Painéis:** o script de layout (`files/layout-macos.js`) usa a mesma API. O Plasma 6 cria painéis *flutuantes* por padrão; para ganhar os pixels da margem, desative em *Modo de edição → Flutuante*. O Plasma 6 também tem *Ajustar ao conteúdo* na largura do painel, uma alternativa melhor que `minimumLength`/`maximumLength` para a dock.
-- **Teclas de volume:** confirme se o problema de registro ainda acontece; se sim, a mesma solução (reiniciar o plasmashell) vale.
+Os dois são tratados pelos scripts. O ambiente atual é o Plasma 6.6 em Wayland (Kubuntu 26.04); o anterior era o Plasma 5.27 em X11 (Kubuntu 24.04). As diferenças:
 
-## Wayland (Plasma 6 usa por padrão)
+| Item | Plasma 5 / X11 | Plasma 6 / Wayland |
+|---|---|---|
+| Ferramentas | `kwriteconfig5`, `qdbus`, `kquitapp5`, `kstart5` | `kwriteconfig6`, `qdbus6`, `kquitapp6`, `kstart` (o `scripts/lib.sh` detecta) |
+| Fontes menores | 9 pt com DPI 88 (`forceFontDPI`, `xrdb`) | 8,3 pt, sem DPI forçado |
+| Dock | `minimumLength`/`maximumLength` | `lengthMode = "fit"`, sem *Flutuante* |
+| Dolphin | `.directory` | atributo estendido `user.kde.fm.viewproperties#1` |
+| Gestos | Touchégg 2.x do PPA | script do KWin `gestos-macos` |
+| App Exposé | atalho `ExposeClass` do KWin | recriado no script `gestos-macos` |
+| Quick Look | `xdotool` + `xclip`, também na Área de trabalho | Toshy + Klipper + script do KWin `quicklook`; só no Dolphin |
+| Brilho no mínimo | apaga a tela | apaga com `scripts/85-brilho.sh` |
+| Menu global em apps GTK | `appmenu-gtk-module` | só em apps GTK rodando em X11 (Xwayland) |
 
-- `forceFontDPI` e `xrdb` **não se aplicam**. Use *Configurações → Tela e monitor → Escala* (ex.: 90%, se a versão permitir abaixo de 100%) ou só reduza as fontes para 8–9 pt.
-- **Chrome:** use `--ozone-platform-hint=auto` junto com `--force-device-scale-factor`.
-- **Menu global:** apps GTK no Wayland dependem do suporte do app; o `appmenu-gtk-module` pode não funcionar.
+Continua igual nos dois: janelas, Menu global nos apps KDE/Qt, Chrome com escala 0.85, teclado do Toshy, teclas de mídia, teclas de volume (componente `kmix` no kglobalaccel).
 
 ## GNOME
 

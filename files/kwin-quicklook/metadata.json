@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Authors": [{ "Name": "kubuntu-macbookpro-2011" }],
+        "Description": "Quick Look: pré-visualização por cima, foco na janela de origem (scripts/70-teclado-macos.sh)",
+        "EnabledByDefault": true,
+        "Icon": "view-preview",
+        "Id": "quicklook",
+        "License": "GPL",
+        "Name": "Quick Look estilo macOS"
+    },
+    "X-Plasma-API": "declarativescript"
+}

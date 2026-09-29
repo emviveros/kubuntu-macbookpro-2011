@@ -27,6 +27,8 @@ backup() {
     done
 }
 
+is_wayland() { [ "${XDG_SESSION_TYPE:-}" = wayland ]; }
+
 require_x11() {
     if [ "${XDG_SESSION_TYPE:-}" != "x11" ]; then
         log "Aviso: sessão ${XDG_SESSION_TYPE:-?}; ajustes de DPI/xrdb só valem em X11."

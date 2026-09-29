@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# Quick Look no Dolphin e na Área de trabalho, versão Wayland (Plasma 6).
+# A versão X11 é o quicklook-dolphin. No Wayland não há xdotool nem xclip:
+#   - o Toshy manda o Ctrl+C (só um app em foco grava na área de
+#     transferência, e só depois de uma tecla de verdade) e lê o endereço do
+#     arquivo pelo Klipper (D-Bus), que não precisa de foco. Isso fica nas
+#     funções de files/toshy/user_custom_functions.py, que chamam este script;
+#   - o script do KWin quicklook (files/kwin-quicklook) mantém a
+#     pré-visualização por cima e o foco na janela de origem.
+#
+#   --show URI  abre a pré-visualização
+#   --sync      depois de uma seta + Ctrl+C: mostra o novo item selecionado
+#   --close     Esc/Espaço: fecha
+#   --closed    a janela fechou (chamado pelo KWin): restaura a área de transferência
+#   --restore   só restaura a área de transferência
+set -u
+
+RUN="${XDG_RUNTIME_DIR:-/tmp}"
+OPEN_FLAG="$RUN/quicklook-dolphin.open"   # o Toshy confere este arquivo
+CLIP="$RUN/quicklook-dolphin.clip"        # área de transferência de antes (gravada pelo Toshy)
+LAST="$RUN/quicklook-dolphin.uri"
+PREVIEWER=(--session --dest org.gnome.NautilusPreviewer --object-path /org/gnome/NautilusPreviewer)
+QDBUS=$(command -v qdbus6 || command -v qdbus)
+
+klipper() { $QDBUS org.kde.klipper /klipper "$@" 2>/dev/null; }
+
+show_file() {
+    printf %s "$1" >"$LAST"
+    gdbus call "${PREVIEWER[@]}" --method org.gnome.NautilusPreviewer2.ShowFile \
+        "$1" "" false "" >/dev/null 2>&1
+}
+
+restore() {
+    [ -f "$CLIP" ] || return 0
+    if [ -s "$CLIP" ]; then
+        klipper setClipboardContents "$(cat "$CLIP")"
+    else
+        klipper clearClipboardContents
+    fi
+    rm -f "$CLIP"
+}
+
+case "${1:-}" in
+--show)
+    touch "$OPEN_FLAG"
+    show_file "$2" ;;
+--sync)
+    # Com a seta segurada as chamadas chegam em rajada: uma roda, no máximo uma
+    # espera (ela lê a seleção mais recente) e as outras são descartadas
+    exec 8>"$RUN/quicklook-dolphin.queue"
+    flock -n 8 || exit 0
+    exec 9>"$RUN/quicklook-dolphin.lock"
+    flock -w 2 9 || exit 0
+    flock -u 8
+    [ -f "$OPEN_FLAG" ] || exit 0
+    last=$(cat "$LAST" 2>/dev/null)
+    for _ in $(seq 16); do
+        uri=$(klipper getClipboardContents | head -1 | cut -d' ' -f1)
+        if [[ $uri == file://* && $uri != "$last" ]]; then
+            [ -f "$OPEN_FLAG" ] && show_file "$uri"
+            break
+        fi
+        sleep 0.025
+    done ;;
+--close)
+    rm -f "$OPEN_FLAG"
+    gdbus call "${PREVIEWER[@]}" --method org.gnome.NautilusPreviewer2.Close >/dev/null 2>&1
+    restore ;;
+--closed)
+    rm -f "$OPEN_FLAG"
+    restore ;;
+--restore)
+    restore ;;
+esac

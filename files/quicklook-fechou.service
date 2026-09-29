@@ -1,0 +1,6 @@
+[Unit]
+Description=Quick Look fechado: restaura a área de transferência (kubuntu-macbookpro-2011)
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/quicklook-wayland --closed

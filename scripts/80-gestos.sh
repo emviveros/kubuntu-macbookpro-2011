@@ -1,16 +1,24 @@
 #!/usr/bin/env bash
-# Gestos do trackpad estilo macOS com o Touchégg 2.x e 4 áreas de trabalho (Spaces).
-# No Plasma 5 em X11 o KDE não tem gestos próprios. O touchegg do repositório do
-# Ubuntu é a versão 1.x antiga; instale a 2.x do PPA (pede sudo):
-#   sudo add-apt-repository ppa:touchegg/stable && sudo apt install touchegg
+# Gestos do trackpad estilo macOS e 4 áreas de trabalho (Spaces).
+# - X11 (Plasma 5): o KDE não tem gestos próprios; usa o Touchégg 2.x do PPA
+#   (o touchegg do Ubuntu é a versão 1.x antiga, que não funciona).
+# - Wayland (Plasma 6): o Touchégg não funciona; o próprio KWin reconhece os
+#   gestos e o script files/kwin-gestos-macos diz o que cada um faz.
 source "$(dirname "$0")/lib.sh"
 
 DESKTOPS="${DESKTOPS:-4}"
 
-backup ~/.config/touchegg/touchegg.conf ~/.config/kwinrc
+backup ~/.config/touchegg/touchegg.conf ~/.config/kwinrc ~/.config/kglobalshortcutsrc
 
-log "Instalando ~/.config/touchegg/touchegg.conf"
-install -Dm644 "$REPO_DIR/files/touchegg.conf" ~/.config/touchegg/touchegg.conf
+if is_wayland; then
+    log "Instalando o script do KWin gestos-macos (gestos de 3 dedos e pinças)"
+    kpackagetool6 --type KWin/Script --upgrade "$REPO_DIR/files/kwin-gestos-macos" >/dev/null 2>&1 ||
+        kpackagetool6 --type KWin/Script --install "$REPO_DIR/files/kwin-gestos-macos" >/dev/null
+    $KWRITE --file kwinrc --group Plugins --key gestos-macosEnabled true
+else
+    log "Instalando ~/.config/touchegg/touchegg.conf"
+    install -Dm644 "$REPO_DIR/files/touchegg.conf" ~/.config/touchegg/touchegg.conf
+fi
 
 if [ "$($KREAD --file kwinrc --group Desktops --key Number --default 1)" -lt "$DESKTOPS" ]; then
     log "Criando $DESKTOPS áreas de trabalho em uma linha"
@@ -29,8 +37,8 @@ done
 # em Meta, e Meta+setas encaixava a janela na metade da tela; no terminal o
 # Toshy já manda Ctrl+Meta+esquerda/direita, que continuam valendo.
 log "Ctrl+setas: trocar de área, Visão geral e janelas do app"
-python3 - <<'PY'
-import dbus
+python3 - "$PLASMA" <<'PY'
+import dbus, sys
 k = dbus.Interface(dbus.SessionBus().get_object("org.kde.kglobalaccel", "/kglobalaccel"),
                    "org.kde.KGlobalAccel")
 META, CTRL = 0x10000000, 0x04000000
@@ -41,15 +49,20 @@ shortcuts = {
     "Switch One Desktop to the Left": [META | CTRL | LEFT, META | LEFT],
     "Switch One Desktop to the Right": [META | CTRL | RIGHT, META | RIGHT],
     "Overview": [META | W, META | UP],
-    "ExposeClass": [CTRL | F7, META | DOWN],
 }
+# No Plasma 6 o KWin não tem mais o atalho ExposeClass; o App Exposé vem do
+# script gestos-macos, que já registra Meta+↓
+if sys.argv[1] == "5":
+    shortcuts["ExposeClass"] = [CTRL | F7, META | DOWN]
 for action, keys in shortcuts.items():
     k.setForeignShortcut(["kwin", action, "KWin", action], dbus.Array(keys, signature="i"))
 PY
 # Sem isso, as teclas novas ficam registradas mas não disparam no X11
 reconfigure_kwin
 
-if ! command -v touchegg >/dev/null; then
+if is_wayland; then
+    :
+elif ! command -v touchegg >/dev/null; then
     log "touchegg não instalado; a configuração vale depois que você instalar."
 elif touchegg --help 2>&1 | grep -q -- --daemon; then
     # O cliente relê o arquivo sozinho; só garante que ele está rodando

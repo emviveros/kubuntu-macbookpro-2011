@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Authors": [{ "Name": "kubuntu-macbookpro-2011" }],
+        "Description": "Tecla de diminuir o brilho apaga a tela no mínimo (scripts/85-brilho.sh)",
+        "EnabledByDefault": true,
+        "Icon": "brightness-low",
+        "Id": "brilho-tela",
+        "License": "GPL",
+        "Name": "Brilho mínimo apaga a tela"
+    },
+    "X-Plasma-API": "declarativescript"
+}

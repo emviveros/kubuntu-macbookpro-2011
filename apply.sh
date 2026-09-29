@@ -16,4 +16,4 @@ done
 echo
 echo "Backup em: $BACKUP_DIR"
 echo "Para desfazer: scripts/restore.sh $BACKUP_DIR"
-echo "Saia e entre na sessão para tudo valer (DPI, fontes GTK, menu global GTK)."
+echo "Reinicie o computador para tudo valer (Toshy, scripts do KWin, fontes)."

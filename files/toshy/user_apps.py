@@ -17,13 +17,25 @@ keymap("User macOS capturas de tela", {
 )
 
 # Com a pré-visualização aberta, o foco fica no Dolphin: as setas movem a seleção
-# e a pré-visualização acompanha, como no Finder
+# e a pré-visualização acompanha, como no Finder. No Wayland a seleção só pode
+# ser lida depois de um Ctrl+C mandado daqui (ver quicklook-wayland).
+if QUICKLOOK_WAYLAND:
+    def _ql_seta(key):
+        return [C(key), C("C-c"), km_run([QUICKLOOK_WL_CMD, '--sync'])]
+    _ql_fechar = km_run([QUICKLOOK_WL_CMD, '--close'])
+    _ql_espaco, _ql_cmd_y = km_quicklook_wl(space=True), km_quicklook_wl()
+else:
+    def _ql_seta(key):
+        return [C(key), km_run([QUICKLOOK_CMD, '--sync'])]
+    _ql_fechar = km_run([QUICKLOOK_CMD, '--close'])
+    _ql_espaco, _ql_cmd_y = km_run([QUICKLOOK_CMD, '--space']), km_run([QUICKLOOK_CMD])
+
 keymap("User macOS Quick Look aberto", {
-    C("Up"):                    [C("Up"), km_run([QUICKLOOK_CMD, '--sync'])],
-    C("Down"):                  [C("Down"), km_run([QUICKLOOK_CMD, '--sync'])],
-    C("Left"):                  [C("Left"), km_run([QUICKLOOK_CMD, '--sync'])],
-    C("Right"):                 [C("Right"), km_run([QUICKLOOK_CMD, '--sync'])],
-    C("Esc"):                   km_run([QUICKLOOK_CMD, '--close']),              # Esc: fechar
+    C("Up"):                    _ql_seta("Up"),
+    C("Down"):                  _ql_seta("Down"),
+    C("Left"):                  _ql_seta("Left"),
+    C("Right"):                 _ql_seta("Right"),
+    C("Esc"):                   _ql_fechar,                                      # Esc: fechar
 }, when = lambda ctx:
     cnfg.screen_has_focus and
     os.path.exists(QUICKLOOK_OPEN) and
@@ -31,8 +43,8 @@ keymap("User macOS Quick Look aberto", {
 )
 
 keymap("User macOS Quick Look", {
-    C("Space"):                 km_run([QUICKLOOK_CMD, '--space']),              # Espaço: pré-visualizar/fechar
-    C("RC-y"):                  km_run([QUICKLOOK_CMD]),                         # ⌘+Y: pré-visualizar/fechar
+    C("Space"):                 _ql_espaco,                                      # Espaço: pré-visualizar/fechar
+    C("RC-y"):                  _ql_cmd_y,                                       # ⌘+Y: pré-visualizar/fechar
     C("Alt-RC-Backspace"):      C("Shift-Delete"),                               # ⌘+Option+Delete: apagar de vez
 }, when = lambda ctx:
     cnfg.screen_has_focus and

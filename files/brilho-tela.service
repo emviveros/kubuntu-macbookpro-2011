@@ -1,0 +1,6 @@
+[Unit]
+Description=Diminuir o brilho; no mínimo apaga a tela (kubuntu-macbookpro-2011)
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/brilho-tela

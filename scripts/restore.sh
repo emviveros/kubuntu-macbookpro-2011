@@ -16,9 +16,12 @@ if [ -f "$SRC/gtk-fonts.txt" ]; then
 fi
 
 log "Itens que o backup não cobre (remova à mão se quiser desfazer):"
-echo "    ~/.config/plasma-workspace/env/appmenu-gtk.sh"
+echo "    ~/.config/plasma-workspace/env/appmenu-gtk.sh e fontconfig-cache-guard.sh"
 echo "    ~/.local/share/applications/google-chrome.desktop e com.google.Chrome.desktop"
-echo "    ~/.local/bin/quicklook-dolphin e ~/.config/touchegg/touchegg.conf (se não havia antes)"
+echo "    ~/.local/bin/quicklook-dolphin, quicklook-wayland, midia-pular e brilho-tela"
+echo "    ~/.config/touchegg/touchegg.conf (se não havia antes)"
+echo "    Scripts do KWin: kpackagetool6 --type KWin/Script --remove gestos-macos (e brilho-tela, quicklook)"
+echo "    Serviços: ~/.config/systemd/user/brilho-tela.service e quicklook-fechou.service"
 echo "    Toshy: cd ~/.local/src/toshy && ./setup_toshy.py uninstall"
 echo "    Indexador: systemctl --user unmask tracker-miner-fs-3.service; rm ~/.config/autostart/tracker-miner-fs-3.desktop"
 

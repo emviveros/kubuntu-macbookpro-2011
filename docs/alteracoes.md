@@ -1,6 +1,6 @@
 # Alterações
 
-Cada alteração lista o arquivo e a chave (para scripts e agentes) e o caminho na interface (para fazer à mão). Os caminhos na interface são do Plasma 5.27 em português.
+Cada alteração lista o arquivo e a chave (para scripts e agentes) e o caminho na interface (para fazer à mão). Os caminhos na interface são do Plasma 5.27 em português; no Plasma 6 são parecidos. Onde o Plasma 6 em Wayland (ambiente atual, Ubuntu 26.04) pede outro caminho, a seção diz.
 
 ## 0. Pacotes (`scripts/00-pacotes.sh`)
 
@@ -12,7 +12,7 @@ Instala só o que falta e pede a senha do sudo uma vez:
 | `gnome-sushi`, `xclip`, `xdotool` | Quick Look no Dolphin (seção 7) |
 | `python3-dbus` | Gravar atalhos no kglobalaccel (seções 3 e 9) |
 | `vlc`, `plasma-browser-integration` | Teclas de mídia (seção 8) |
-| `touchegg` 2.x, do `ppa:touchegg/stable` | Gestos (seção 9); o do Ubuntu é o 1.x |
+| `touchegg` 2.x, do `ppa:touchegg/stable` | Gestos no X11 (seção 9); o do Ubuntu é o 1.x. No Wayland não é instalado |
 | Toshy (`git clone` em `~/.local/src/toshy` + `./setup_toshy.py install`) | Teclado estilo macOS (seção 7). O instalador é interativo e exige reiniciar o computador |
 
 O Google Chrome (seção 6) não é instalado: baixe-o do site do Google.
@@ -51,14 +51,27 @@ Na interface: *Aparência → Fontes* (inclui "Forçar DPI da fonte") e *Aparên
 
 O DPI 88 vale para tudo que lê `Xft.dpi` no X11: apps KDE, GTK, Firefox e Chrome. Na sessão atual o script aplica com `xrdb -merge`, mas o efeito completo só vem depois de sair e entrar na sessão.
 
+**No Wayland** o DPI forçado não vale para os apps nativos (o Plasma 6 nem mostra a opção). O script usa o tamanho equivalente em pontos, 9 × 88/96 ≈ 8,3 pt, e apaga o `forceFontDPI`, que o Plasma 6 ainda aplica aos apps X11 (Xwayland) e os deixaria menores que os outros:
+
+| O quê | X11 | Wayland |
+|---|---|---|
+| Fonte geral, menus, monoespaçada, GTK | 9 pt | 8,3 pt |
+| Barra de ferramentas, título da janela | 8 pt | 7,3 pt |
+| Menor legível | 7 pt | 6,4 pt |
+| `kcmfonts` → `forceFontDPI` | 88 | apagado |
+
 Se ficar pequeno demais, suba o DPI para 92 ou 96 antes de mexer nas fontes.
 
 ## 3. Painéis estilo macOS (`scripts/30-paineis-macos.sh` + `files/layout-macos.js`)
 
 | Painel | Posição | Altura | Ocultar | Widgets |
 |---|---|---|---|---|
-| Barra superior | topo | 26 px | não | `kickoff` (`Alt+F1`), `appmenu`, `panelspacer`, `pager` (número da área), `systemtray`, `digitalclock` |
-| Dock | baixo, centralizada, 300–700 px | 40 px | automático | `icontasks` |
+| Barra superior | topo | 26 px | não | `kickoff` (`Alt+F1`), `appmenu`, `panelspacer`, `systemtray`, `digitalclock` |
+| Dock | baixo, centralizada, do tamanho dos ícones | 40 px | automático | `icontasks` |
+
+A barra já teve um indicador de áreas de trabalho (`pager`), que o usuário preferiu tirar; o script remove o widget se o encontrar.
+
+No Plasma 6 a dock usa *Ajustar ao conteúdo* (`lengthMode = "fit"`). O padrão (`"fill"`) ignora os limites de largura e a deixava da largura da tela; no Plasma 5 ela fica entre 300 e 700 px (`minimumLength`/`maximumLength`). Os dois painéis ficam sem *Flutuante* (`floating = false`), para a barra superior não perder a margem.
 
 Antes havia só um painel embaixo, com 44 px, contendo `kickoff`, `pager`, `icontasks`, `marginsseparator`, `systemtray`, `digitalclock` e `minimizeall`. O script transforma esse painel na dock e cria a barra superior.
 
@@ -79,10 +92,12 @@ Botões de fechar/minimizar na barra superior (para janelas maximizadas) depende
 | O quê | Arquivo → grupo → chave |
 |---|---|
 | Mesmo modo para todas as pastas | `dolphinrc` → `[General]` → `GlobalViewProps=true` |
-| Modo Compacto | `~/.local/share/dolphin/view_properties/global/.directory` → `[Dolphin]` → `ViewMode=2` (0 Ícones, 1 Detalhes, 2 Compacto) |
+| Modo Compacto | pasta `~/.local/share/dolphin/view_properties/global/` → `[Dolphin]` → `ViewMode=2` (0 Ícones, 1 Detalhes, 2 Compacto), ver abaixo |
 | Sem miniaturas | mesmo arquivo → `PreviewsShown=false` |
 | Ícones 16 px no Compacto | `dolphinrc` → `[CompactMode]` → `IconSize=16` |
 | Ícones 16 px em Locais | `dolphinrc` → `[PlacesPanel]` → `IconSize=16` |
+
+Onde fica o modo: até o Dolphin 24.05, no arquivo `.directory` dessa pasta. Do 24.08 em diante (o Ubuntu 26.04 traz o 25.12), num atributo estendido da pasta, `user.kde.fm.viewproperties#1`, com o mesmo conteúdo (inclusive `Version=4`); o Dolphin novo apaga o `.directory` sem ler. O script grava o atributo quando o sistema de arquivos aceita, senão o `.directory`. Para conferir: `python3 -c "import os; print(os.getxattr(os.path.expanduser('~/.local/share/dolphin/view_properties/global'), 'user.kde.fm.viewproperties#1').decode())"`.
 
 O Dolphin precisa estar fechado: ele reescreve a configuração ao sair. Os campos `Timestamp`/`ViewPropsTimestamp` são atualizados para que as configurações novas tenham prioridade sobre as de cada pasta.
 
@@ -92,7 +107,9 @@ Na interface: *Exibir → Modo de visualização → Compacto* e *Configurar Dol
 
 - Cópias de `/usr/share/applications/google-chrome.desktop` e `com.google.Chrome.desktop` em `~/.local/share/applications/`, com `env UBUNTU_MENUPROXY=0` e `--force-device-scale-factor=0.85` nas linhas `Exec=`.
 - `UBUNTU_MENUPROXY=0` é **obrigatório** com o Menu global ativo; sem ele o Chrome trava ao abrir (ver [problemas-conhecidos.md](problemas-conhecidos.md)).
+- `XDG_CACHE_HOME=~/.cache/google-chrome-xdg` também está no `Exec=`: o Chrome 154 regrava o cache de fontes do usuário num formato que o fontconfig do sistema não lê, e o plasmashell cai no login seguinte. O cache do Chrome passa a ficar nessa pasta. Como segunda proteção, `~/.config/plasma-workspace/env/fontconfig-cache-guard.sh` (cópia de `files/fontconfig-cache-guard.sh`) apaga o cache quebrado a cada login, antes do Plasma (ver [problemas-conhecidos.md](problemas-conhecidos.md)).
 - Esse valor substitui a escala que o Chrome calcularia pelo DPI 88 (cerca de 0.92), em vez de se somar a ela.
+- No Wayland (o Chrome 154 já abre nativo) a escala também vale, e o Chrome manda o menu para o Menu global.
 - Só vale quando o Chrome é aberto do zero. Feche com `Ctrl+Shift+Q` e desative *Configurações → Sistema → Continuar executando apps em segundo plano*.
 
 ## 7. Teclado estilo macOS (`scripts/70-teclado-macos.sh`)
@@ -119,7 +136,7 @@ O script insere dois trechos (`files/toshy/*.py`) nas *slices* `user_custom_func
 | `⌘+Shift+4` | Região selecionável, salva na Área de trabalho |
 | `⌘+Shift+5` | Abre o Spectacle (painel de captura) |
 | `Ctrl+⌘+Shift+3` / `4` | Igual, mas copia para a área de transferência |
-| `Espaço` ou `⌘+Y` no Dolphin ou na Área de trabalho | Pré-visualização (Quick Look) com o `sushi`. As setas mudam a seleção e ela acompanha; `Espaço` ou `Esc` fecham. |
+| `Espaço` ou `⌘+Y` no Dolphin (e na Área de trabalho, só no X11) | Pré-visualização (Quick Look) com o `sushi`. As setas mudam a seleção e ela acompanha; `Espaço` ou `Esc` fecham. |
 
 **Apagar sem tecla Del.** O MacBook não tem Del; a tecla "delete" é o Backspace do Linux. O `Fn+Backspace → Del` vem do driver `hid_apple`, e o restante vem do Toshy, a não ser onde a tabela indica outra origem:
 
@@ -133,11 +150,21 @@ O script insere dois trechos (`files/toshy/*.py`) nas *slices* `user_custom_func
 
 No terminal, `⌘+Delete` apaga até o começo da linha (`Ctrl+U`) e `Option+Delete` apaga a palavra anterior (`Ctrl+W`).
 
-**Perfil do AppArmor:** o script instala `files/apparmor-nautilus-previewer` em `/etc/apparmor.d/nautilus-previewer` e **pede a senha do sudo** quando o perfil falta ou mudou. Sem ele, pré-visualizar HTML derruba o serviço de pré-visualização (ver [problemas-conhecidos.md](problemas-conhecidos.md)).
+**Perfil do AppArmor:** quando `kernel.apparmor_restrict_unprivileged_userns = 1` (Ubuntu 24.04), o script instala `files/apparmor-nautilus-previewer` em `/etc/apparmor.d/nautilus-previewer` e **pede a senha do sudo** se o perfil falta ou mudou. No Ubuntu 26.04 essa restrição vem desligada e o perfil não é instalado. Sem ele, pré-visualizar HTML derruba o serviço de pré-visualização (ver [problemas-conhecidos.md](problemas-conhecidos.md)).
 
 **Como funciona a pré-visualização:** nem o Dolphin nem a Área de trabalho informam a seleção por D-Bus. Por isso, `~/.local/bin/quicklook-dolphin` (cópia de `files/quicklook-dolphin`) manda Ctrl+C, lê o endereço do arquivo na área de transferência e depois restaura o conteúdo anterior. Se nada foi copiado como arquivo (renomeando ou digitando no filtro), o Espaço é digitado normalmente. O script chama o serviço `org.gnome.NautilusPreviewer` pelo D-Bus, com a janela de origem como janela-mãe, e devolve o foco a ela: a seleção continua visível. Enquanto a pré-visualização está aberta, existe o arquivo `$XDG_RUNTIME_DIR/quicklook-dolphin.open`, e o Toshy repassa as setas à janela e chama `quicklook-dolphin --sync`, que mostra o novo item selecionado; `Esc` chama `--close`. Repetições de tecla a menos de 0,7 s são ignoradas.
 
-Para desfazer: apague o trecho entre as marcas e rode `toshy-services-restart`. Para remover o Toshy: `cd ~/.local/src/toshy && ./setup_toshy.py uninstall`.
+**Pré-visualização no Wayland** (`~/.local/bin/quicklook-wayland`, cópia de `files/quicklook-wayland`). Lá não há `xdotool` nem `xclip`, e um app só grava na área de transferência quando está em foco e depois de uma tecla de verdade. Por isso a função `km_quicklook_wl` (`files/toshy/user_custom_functions.py`), que roda dentro do Toshy:
+
+1. guarda o texto da área de transferência em `$XDG_RUNTIME_DIR/quicklook-dolphin.clip` e a limpa, pelo Klipper (D-Bus);
+2. manda Ctrl+C ao Dolphin, que está em foco;
+3. espera até 0,3 s o Klipper mostrar um `file://`. Se aparecer, chama `quicklook-wayland --show`; se não (renomeando, filtrando), restaura a área de transferência e digita o Espaço.
+
+Com a pré-visualização aberta, cada seta vai ao Dolphin seguida de Ctrl+C, e `quicklook-wayland --sync` mostra o novo arquivo. O script do KWin `quicklook` (`files/kwin-quicklook`) mantém a janela do sushi por cima e devolve o foco ao Dolphin sempre que ela o toma. Quando ela fecha, por qualquer meio, ele inicia `quicklook-fechou.service` (`~/.config/systemd/user/`), que restaura a área de transferência. Só texto volta à área de transferência: se havia uma imagem copiada, ela continua no histórico do Klipper. O sushi 50 não tem mais o problema de parar de abrir depois de fechar, então o serviço não é reiniciado.
+
+Na Área de trabalho do Plasma 6 em Wayland, o Ctrl+C não copia os arquivos selecionados (nada chega à área de transferência), e o Espaço lá é só digitado. Ver [problemas-conhecidos.md](problemas-conhecidos.md).
+
+Para desfazer: apague o trecho entre as marcas e rode `toshy-services-restart`. No Wayland, também: `kpackagetool6 --type KWin/Script --remove quicklook`. Para remover o Toshy: `cd ~/.local/src/toshy && ./setup_toshy.py uninstall`.
 
 ## 8. Mídia (`files/midia-pular`, instalado por `scripts/70-teclado-macos.sh`)
 
@@ -159,7 +186,9 @@ O widget *Reprodução de mídia* da bandeja só é carregado quando um player a
 
 ## 9. Gestos do trackpad (`scripts/80-gestos.sh` + `files/touchegg.conf`)
 
-O Plasma 5 em X11 não tem gestos próprios (eles só existem no Wayland). O `touchegg` do repositório do Ubuntu é a versão 1.x, que não funciona; use a 2.x do PPA do projeto:
+**No Wayland (Plasma 6):** o Touchégg não funciona. O próprio KWin reconhece os gestos: de fábrica, 4 dedos para cima abrem a Visão geral e para os lados trocam de área. O script do KWin `gestos-macos` (`files/kwin-gestos-macos`, instalado em `~/.local/share/kwin/scripts/`) acrescenta os de 3 dedos e as pinças da tabela abaixo, com `SwipeGestureHandler` e `PinchGestureHandler`. Ele também recria o App Exposé, que o Plasma 6 não tem mais como atalho: pega as janelas do app ativo na área atual e chama o efeito *Apresentar janelas* por D-Bus (`org.kde.KWin.Effect.WindowView1.activate`), com o atalho `Meta+↓`. O script vale por completo a partir da sessão seguinte à instalação.
+
+**No X11 (Plasma 5):** o KDE não tem gestos próprios. O `touchegg` do repositório do Ubuntu é a versão 1.x, que não funciona; use a 2.x do PPA do projeto:
 
 ```bash
 sudo add-apt-repository ppa:touchegg/stable
@@ -182,7 +211,7 @@ Atalhos de teclado, como no macOS (nos apps gráficos o Toshy manda o Ctrl físi
 |---|---|---|
 | `Ctrl+←` / `Ctrl+→` | Área anterior / seguinte | `Meta+←/→` e `Meta+Ctrl+←/→` |
 | `Ctrl+↑` | Visão geral | `Meta+↑` e `Meta+W` |
-| `Ctrl+↓` | Janelas do app atual | `Meta+↓` e `Ctrl+F7` |
+| `Ctrl+↓` | Janelas do app atual | `Meta+↓` (no Plasma 5, também `Ctrl+F7`) |
 
 Esses atalhos valem em qualquer app, inclusive no terminal, onde o Toshy mantém o Ctrl como Ctrl. `files/toshy/user_apps.py` trata as duas formas do Ctrl. Na primeira área, `Ctrl+←` não faz nada, e na última `Ctrl+→` também não, como no macOS.
 
@@ -194,7 +223,24 @@ O script também cria 4 áreas de trabalho em uma linha (`kwinrc` → `[Desktops
 
 Os gestos de 2 dedos (rolagem, pinça para zoom) continuam com o libinput e os próprios apps. O clique com 2 dedos é o botão direito.
 
-Na interface: o app gráfico *Touché* (Flathub, `com.github.joseexposito.touche`) edita o mesmo arquivo.
+Na interface (X11): o app gráfico *Touché* (Flathub, `com.github.joseexposito.touche`) edita o mesmo arquivo. No Wayland, os gestos de 3 dedos só mudam editando `files/kwin-gestos-macos/contents/ui/main.qml` e rodando o script de novo.
+
+## 10. Brilho no mínimo apaga a tela (`scripts/85-brilho.sh`, só Plasma 6)
+
+No Plasma 5, o brilho no mínimo desligava a luz de fundo, como no macOS. No Plasma 6 o brilho passa pelo KWin, que nunca grava 0 no hardware: no mínimo a tela fica fraca, mas acesa. Neste MacBook o kernel 7.0 usa a interface `acpi_video0` (níveis 0 a 15), e o KWin para no nível 1.
+
+| Peça | O que faz |
+|---|---|
+| `~/.local/bin/brilho-tela` (cópia de `files/brilho-tela`) | Diminui um passo pelo Plasma (`org.kde.ScreenBrightness.AdjustBrightnessStep`, com o aviso na tela). No último passo, ou já no mínimo, grava 0 na luz de fundo pelo logind (`org.freedesktop.login1.Session.SetBrightness`), que não pede senha |
+| `~/.config/systemd/user/brilho-tela.service` | Roda o script |
+| Script do KWin `brilho-tela` (`files/kwin-brilho-tela`) | Fica com a tecla de diminuir o brilho (F1) e inicia o serviço |
+| `kglobalshortcutsrc` → `[org_kde_powerdevil]` → `Decrease Screen Brightness=none` | Tira a tecla do Plasma |
+
+A tecla de aumentar o brilho continua com o Plasma e acende a tela de novo.
+
+O atalho fica num script do KWin porque um comando novo no kglobalaccel (como em *Configurações → Atalhos → Adicionar comando*) só passa a valer depois de reiniciar a sessão: o kglobalaccel roda dentro do KWin no Wayland.
+
+Para desfazer: `kpackagetool6 --type KWin/Script --remove brilho-tela` e, em *Configurações → Atalhos → Gerenciamento de energia*, devolva a tecla a *Reduzir o brilho da tela*.
 
 ## Descartado
 

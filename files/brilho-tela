@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Tecla de diminuir o brilho (F1): no mínimo a tela apaga, como no Plasma 5.
+# No Plasma 6 o brilho passa pelo KWin, que nunca grava 0 na luz de fundo: no
+# mínimo ela fica fraca, mas acesa. Este script faz o passo normal do Plasma
+# (com o aviso na tela) e, quando chega ao mínimo, grava 0 direto no hardware
+# pelo logind, que não pede senha. A tecla de aumentar continua com o Plasma e
+# acende a tela de novo.
+set -u
+
+SB=(org.kde.ScreenBrightness /org/kde/ScreenBrightness)
+QDBUS=$(command -v qdbus6 || command -v qdbus)
+
+brilho() {
+    $QDBUS org.kde.ScreenBrightness /org/kde/ScreenBrightness/display0 \
+        org.freedesktop.DBus.Properties.Get org.kde.ScreenBrightness.Display Brightness 2>/dev/null
+}
+
+apagar() {
+    for d in /sys/class/backlight/*; do
+        [ -e "$d" ] || continue
+        busctl call org.freedesktop.login1 /org/freedesktop/login1/session/auto \
+            org.freedesktop.login1.Session SetBrightness ssu backlight "$(basename "$d")" 0
+    done
+}
+
+b=$(brilho)
+# Passo do Plasma: 5% de 10000. No último passo (ou já no mínimo), apaga.
+if [ -n "$b" ] && [ "$b" -le 500 ]; then
+    [ "$b" -gt 0 ] && $QDBUS "${SB[@]}" org.kde.ScreenBrightness.AdjustBrightnessStep 1 0
+    sleep 0.3   # o KWin grava o novo nível; o 0 tem que vir depois
+    apagar
+else
+    $QDBUS "${SB[@]}" org.kde.ScreenBrightness.AdjustBrightnessStep 1 0
+fi

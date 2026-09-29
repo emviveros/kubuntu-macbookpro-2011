@@ -36,23 +36,10 @@ top.widgets().forEach(function (w) {
     if (w.type == "org.kde.plasma.kickoff" && !w.globalShortcut) w.globalShortcut = "Alt+F1";
 });
 
-// Indicador de áreas de trabalho antes da bandeja (sem ele, trocar de área
-// com o gesto de 3 dedos faz as janelas "sumirem" sem aviso)
-if (!hasWidget(top, "org.kde.plasma.pager")) {
-    var pager = top.addWidget("org.kde.plasma.pager");
-    pager.currentConfigGroup = ["General"];
-    pager.writeConfig("displayedText", 0); // número da área
-    pager.writeConfig("showWindowIcons", false);
-    // addWidget põe no fim; a ordem vale depois de reiniciar o plasmashell
-    var ids = top.widgets().map(function (w) { return w.id; });
-    var tray = top.widgets().filter(function (w) { return w.type == "org.kde.plasma.systemtray"; })[0];
-    if (tray) {
-        ids = ids.filter(function (id) { return id != pager.id; });
-        ids.splice(ids.indexOf(tray.id), 0, pager.id);
-        top.currentConfigGroup = ["General"];
-        top.writeConfig("AppletOrder", ids.join(";"));
-    }
-}
+// Sem indicador de áreas de trabalho na barra: o usuário preferiu tirar
+top.widgets().forEach(function (w) {
+    if (w.type == "org.kde.plasma.pager") w.remove();
+});
 
 if (!dock) {
     dock = new Panel("org.kde.panel");
@@ -66,9 +53,21 @@ if (!hasWidget(dock, "org.kde.plasma.icontasks") && !hasWidget(dock, "org.kde.pl
 }
 dock.height = 40;
 dock.alignment = "center";
-dock.minimumLength = 300;
-dock.maximumLength = 700;
 dock.hiding = "autohide";
+if (typeof dock.lengthMode !== "undefined") {
+    // Plasma 6: "Ajustar ao conteúdo". Com o padrão ("fill") a dock ocupa a
+    // largura toda e ignora os limites abaixo
+    dock.lengthMode = "fit";
+} else {
+    dock.minimumLength = 300;
+    dock.maximumLength = 700;
+}
+
+// O Plasma 6 cria painéis flutuantes, com margem em volta; sem ela a barra
+// superior não perde pixels
+[top, dock].forEach(function (p) {
+    if (typeof p.floating !== "undefined") p.floating = false;
+});
 
 panels().forEach(function (p) {
     print(p.location + " h=" + p.height + " " + p.hiding + " | " +

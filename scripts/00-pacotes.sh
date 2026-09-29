@@ -17,8 +17,9 @@ for p in "${APT[@]}"; do
     dpkg-query -W -f='${Status}' "$p" 2>/dev/null | grep -q "ok installed" || missing+=("$p")
 done
 
-# O touchegg do Ubuntu é a versão 1.x, que não funciona; a 2.x vem do PPA do projeto
-touchegg_ok() { touchegg --help 2>&1 | grep -q -- --daemon; }
+# O touchegg do Ubuntu é a versão 1.x, que não funciona; a 2.x vem do PPA do projeto.
+# No Wayland o Touchégg não funciona: os gestos ficam com o KWin (80-gestos.sh).
+touchegg_ok() { is_wayland || touchegg --help 2>&1 | grep -q -- --daemon; }
 if ! touchegg_ok; then
     if ! grep -rqs "touchegg/stable" /etc/apt/sources.list.d/; then
         log "Adicionando o PPA do Touchégg (pede a senha do sudo)"
@@ -34,7 +35,7 @@ if [ ${#missing[@]} -gt 0 ]; then
 else
     log "Pacotes apt já instalados"
 fi
-if touchegg_ok && ! systemctl is-enabled --quiet touchegg.service; then
+if ! is_wayland && touchegg_ok && ! systemctl is-enabled --quiet touchegg.service; then
     sudo systemctl enable --now touchegg.service
 fi
 
