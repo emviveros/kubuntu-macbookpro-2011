@@ -21,7 +21,7 @@ Se você é um agente de IA reinstalando isto, leia [AGENTS.md](AGENTS.md) prime
 - **Fontes em 9 pt com DPI 88**, o que deixa o texto uns 20% menor que o padrão. Ícones das barras de ferramentas com 16 px.
 - **Dolphin** no modo Compacto em todas as pastas.
 - **Google Chrome** com escala 0.85.
-- **Teclado como no Mac** (Toshy): ⌘+C/V/Q/Tab, capturas com ⌘+Shift+3/4/5 e Quick Look no Dolphin. Os pré-requisitos pedem sudo; ver [docs/alteracoes.md](docs/alteracoes.md#7-teclado-estilo-macos-scripts70-teclado-macossh).
+- **Teclado como no Mac** (Toshy): ⌘+C/V/Q/Tab, capturas com ⌘+Shift+3/4/5 e Quick Look (Espaço) no Dolphin e na Área de trabalho, navegando com as setas. Os pré-requisitos são instalados por `scripts/00-pacotes.sh`; ver [docs/alteracoes.md](docs/alteracoes.md#7-teclado-estilo-macos-scripts70-teclado-macossh).
 - **Gestos do trackpad** estilo macOS: Mission Control, App Exposé, trocar de área de trabalho, Launchpad.
 - **Teclas de mídia** controlam o VLC, o YouTube e o YouTube Music.
 
@@ -36,19 +36,20 @@ cd kubuntu-macbookpro-2011
 ./apply.sh 20 50    # só fontes e Dolphin
 ```
 
-Os scripts fazem backup antes de alterar, em `~/.config/backup-tela-<data>/`. No fim, saia e entre na sessão.
+Os scripts fazem backup antes de alterar, em `~/.config/backup-tela-<data>/`. No fim, saia e entre na sessão. Num sistema novo, rode o `./apply.sh` num terminal: ele pede a senha do sudo para instalar os pacotes e o instalador do Toshy faz perguntas. Depois, reinicie o computador para o Toshy pegar o teclado. O Google Chrome não é instalado pelos scripts.
 
 Para desfazer: `scripts/restore.sh ~/.config/backup-tela-<data>`
 
 | Script | O que faz |
 |---|---|
+| `scripts/00-pacotes.sh` | Instala o que falta: Toshy, Touchégg 2.x (PPA), gnome-sushi, xclip, xdotool, VLC e outros. Pede sudo |
 | `scripts/10-janelas.sh` | Barras de título compactas, sem bordas |
 | `scripts/20-fontes-dpi.sh` | Fontes 9 pt, DPI 88, ícones 16 px (KDE e GTK) |
 | `scripts/30-paineis-macos.sh` | Barra superior com Menu global + dock oculta; reinicia o plasmashell |
 | `scripts/40-menu-global-gtk.sh` | Apps GTK mandam o menu para a barra superior |
 | `scripts/50-dolphin.sh` | Dolphin no modo Compacto (feche o Dolphin antes) |
 | `scripts/60-chrome.sh` | Chrome com escala 0.85 (`CHROME_SCALE=0.9 ./scripts/60-chrome.sh` para mudar) |
-| `scripts/70-teclado-macos.sh` | Com o Toshy: ⌘ como no Mac, ⌘+Shift+3/4/5 para capturas, Espaço para pré-visualizar no Dolphin |
+| `scripts/70-teclado-macos.sh` | Com o Toshy: ⌘ como no Mac, ⌘+Shift+3/4/5 para capturas, Espaço para pré-visualizar no Dolphin e na Área de trabalho |
 | `scripts/80-gestos.sh` | Gestos de 3 e 4 dedos com o Touchégg 2.x, 4 áreas de trabalho |
 
 ## Atalhos úteis para janelas

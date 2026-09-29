@@ -34,6 +34,16 @@ fi
 log "Instalando ~/.local/bin/quicklook-dolphin"
 install -Dm755 "$REPO_DIR/files/quicklook-dolphin" ~/.local/bin/quicklook-dolphin
 
+# Sem este perfil, pré-visualizar HTML derruba o serviço do sushi (o sandbox do
+# WebKit precisa de "userns", bloqueado pelo AppArmor do Ubuntu 24.04).
+PROFILE=/etc/apparmor.d/nautilus-previewer
+if [ -d /etc/apparmor.d ] && ! cmp -s "$REPO_DIR/files/apparmor-nautilus-previewer" "$PROFILE"; then
+    log "Instalando o perfil AppArmor $PROFILE (pede a senha do sudo)"
+    sudo install -m644 "$REPO_DIR/files/apparmor-nautilus-previewer" "$PROFILE" &&
+        sudo apparmor_parser -r "$PROFILE" ||
+        log "Aviso: perfil não instalado; a pré-visualização de HTML vai falhar."
+fi
+
 # Insere cada trecho dentro da "slice" do Toshy (preservada em reinstalações),
 # entre marcas próprias, substituindo a versão anterior se já existir.
 log "Inserindo atalhos nas slices do $CFG"

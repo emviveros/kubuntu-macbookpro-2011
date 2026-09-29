@@ -1,0 +1,13 @@
+# Pré-visualização do gnome-sushi (Quick Look no Dolphin, scripts/70-teclado-macos.sh).
+# O WebKit, que mostra HTML, isola cada página com o bwrap. O Ubuntu 24.04 bloqueia
+# isso em programas sem "userns" no AppArmor, e o serviço inteiro caía.
+# Mesmo formato do perfil do GNOME Web (/etc/apparmor.d/epiphany).
+
+abi <abi/4.0>,
+include <tunables/global>
+
+profile nautilus-previewer /usr/libexec/org.gnome.NautilusPreviewer flags=(unconfined) {
+  userns,
+
+  include if exists <local/nautilus-previewer>
+}

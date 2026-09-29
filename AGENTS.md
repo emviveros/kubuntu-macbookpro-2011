@@ -18,7 +18,7 @@ Este repositório descreve o estado desejado da interface de um MacBook Pro 13" 
 
 - **Faça backup** antes de alterar. Os scripts fazem isso via `backup()` em `scripts/lib.sh`.
 - **Depois de recriar a bandeja do sistema, reinicie o plasmashell.** Sem isso, as teclas de volume param de funcionar (ver [docs/problemas-conhecidos.md](docs/problemas-conhecidos.md)).
-- **Não use `sudo` sem pedir.** Só o pacote `appmenu-gtk3-module` exige instalação, e ele costuma vir com o Kubuntu.
+- **Não use `sudo` sem pedir.** Os pacotes de pré-requisito (Toshy, `touchegg` do PPA, `gnome-sushi`) estão em [docs/alteracoes.md](docs/alteracoes.md). O `scripts/70-teclado-macos.sh` pede a senha para instalar um perfil do AppArmor em `/etc/apparmor.d/`: rode-o num terminal onde o usuário possa digitar.
 - **Não simule resolução maior** (`xrandr --scale-from`) sem o usuário pedir. O texto fica borrado e isso foi descartado.
 - **Nenhum segredo** vai para este repositório, que é público.
 - **Ao adicionar um ajuste novo:** crie um script numerado em `scripts/`, registre em `docs/alteracoes.md` e na tabela do `README.md`.

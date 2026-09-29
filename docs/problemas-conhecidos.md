@@ -67,3 +67,19 @@ Verificar: `systemctl --user is-enabled tracker-miner-fs-3.service` deve respond
 **Solução:** `files/toshy/user_apps.py` define `Super-Left → C-Super-Left` e `Super-Right → C-Super-Right` na *slice* do usuário, que tem prioridade. No KDE, `scripts/80-gestos.sh` também liga `Meta+←/→` à troca de área e tira os atalhos de encaixar a janela na metade da tela, que usavam essas teclas.
 
 **Diagnóstico:** o teclado virtual do Toshy é o `XWayKeyz (virtual) Keyboard` em `/proc/bus/input/devices`. Lendo o `/dev/input/eventN` dele, dá para ver as teclas que realmente chegam ao KDE.
+
+## Quick Look: a pré-visualização abre atrás, para de abrir ou pula teclas
+
+**Sintoma:** ao apertar Espaço, aparece um ícone na dock, mas a janela fica atrás; ou funciona algumas vezes e para; ou um `.html` não abre.
+
+**Causas e soluções** (todas em `files/quicklook-dolphin`, exceto o perfil do AppArmor):
+
+- **Janela atrás:** a proteção contra roubo de foco do KWin segura janelas abertas em segundo plano. Uma regra de janela (`fsplevel=0`) não resolveu. Solução: chamar o `ShowFile` do serviço pelo D-Bus passando a janela de origem como mãe (`x11:<id em hexadecimal>`); o KWin a mantém acima da origem.
+- **Para de abrir:** no `sushi` 46, depois que a janela de pré-visualização é fechada (Esc, Espaço ou `Close()`), o serviço não mostra mais nenhuma: as novas são criadas mas ficam sem mapear. Solução: reiniciar o serviço (`pkill` no `gjs` do `org.gnome.NautilusPreviewer`) a cada abertura; o D-Bus o sobe de novo em cerca de 0,6 s.
+- **Abre e fecha sozinha:** com a tecla segurada, o Toshy repete o comando a cada ~0,1 s (um aperto chegou a gerar 10 chamadas). Solução: ignorar chamadas a menos de 0,7 s da anterior.
+- **HTML derruba o serviço:** o WebKit isola cada página com o `bwrap`, e o Ubuntu 24.04 (`kernel.apparmor_restrict_unprivileged_userns = 1`) bloqueia isso para programas sem permissão: `bwrap: setting up uid map: Permission denied` e SIGTRAP (relatório em `/var/crash/_usr_bin_gjs-console.1000.crash`). Solução: `scripts/70-teclado-macos.sh` instala o perfil `/etc/apparmor.d/nautilus-previewer` com `userns`, igual ao que o Ubuntu traz para o GNOME Web (`/etc/apparmor.d/epiphany`).
+- **Setas ignoradas depois da primeira:** o `xclip` que guarda a área de transferência fica rodando e herdava a saída e as travas do script, que ficava esperando por ele. Solução: desviar a saída e fechar os descritores das travas nas chamadas do `xclip`.
+
+Não funcionou: tirar o foco da pré-visualização para mandar a seta ao Dolphin (o Dolphin ignora teclas enviadas sem foco, e a troca leva ~0,35 s, perdendo teclas) e selecionar com `org.freedesktop.FileManager1.ShowItems` (puxa o foco para o Dolphin).
+
+Verificar: com uma pré-visualização aberta, `cat /proc/$(pgrep -f "^/usr/bin/gjs /usr/libexec/org.gnome.NautilusPreviewer")/attr/current` deve mostrar `nautilus-previewer (unconfined)`.

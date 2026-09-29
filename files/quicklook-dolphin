@@ -1,52 +1,140 @@
 #!/usr/bin/env bash
-# Quick Look no Dolphin: pré-visualiza o item selecionado com o sushi (gnome-sushi).
-# O Toshy chama este script ao apertar Espaço ou ⌘+Y numa janela do Dolphin.
+# Quick Look no Dolphin e na Área de trabalho: pré-visualiza o item selecionado
+# com o serviço do gnome-sushi (org.gnome.NautilusPreviewer). O Toshy chama:
+#   (sem opção) ⌘+Y, --space Espaço: abre, ou fecha se já estiver aberta
+#   --sync  depois de repassar uma seta: mostra o novo item selecionado
+#   --close Esc: fecha
 #
-# O Dolphin não informa a seleção por D-Bus, então o script manda Ctrl+C e lê o
-# endereço do arquivo na área de transferência, restaurando o conteúdo anterior depois.
+# Com a pré-visualização aberta, o foco continua na janela de origem: as setas
+# movem a seleção dela (que fica visível) e a pré-visualização acompanha, como no
+# Finder. O arquivo $OPEN_FLAG avisa ao Toshy que ela está aberta.
+#
+# Nem o Dolphin nem a Área de trabalho informam a seleção por D-Bus, então o
+# script manda Ctrl+C e lê o endereço do arquivo na área de transferência,
+# restaurando o conteúdo anterior depois.
 # Com --space: se nada foi copiado como arquivo (o foco está num campo de texto,
 # como renomear ou filtrar), digita o espaço normalmente.
 set -u
 
+PREVIEWER=(--session --dest org.gnome.NautilusPreviewer --object-path /org/gnome/NautilusPreviewer)
+SERVICE='^/usr/bin/gjs /usr/libexec/org[.]gnome[.]NautilusPreviewer'
 sel=clipboard
-saved=$(mktemp)
-trap 'rm -f "$saved"' EXIT
+OPEN_FLAG="${XDG_RUNTIME_DIR:-/tmp}/quicklook-dolphin.open"
 
-# Guarda o conteúdo atual no formato mais útil que estiver disponível
-targets=$(xclip -o -selection $sel -t TARGETS 2>/dev/null)
-old_type=
-for t in text/uri-list image/png UTF8_STRING text/plain; do
-    if grep -qx "$t" <<<"$targets"; then old_type=$t; break; fi
-done
-[ -n "$old_type" ] && xclip -o -selection $sel -t "$old_type" >"$saved" 2>/dev/null
-
-restore() {
-    if [ -n "$old_type" ]; then
-        xclip -i -selection $sel -t "$old_type" <"$saved"
-    else
-        xclip -i -selection $sel </dev/null
-    fi
+preview_window() {
+    xdotool search --onlyvisible --class NautilusPreviewer 2>/dev/null | tail -1
 }
 
-# Marca a área de transferência para saber se o Ctrl+C copiou algo
-mark="quicklook-$$-$RANDOM"
-printf %s "$mark" | xclip -i -selection $sel
-xdotool key --clearmodifiers ctrl+c
+# Endereço do item selecionado na janela ativa, ou nada se não houver arquivo
+selected_uri() {
+    local saved targets old_type t mark uri=
+    saved=$(mktemp)
 
-uri=
-for _ in $(seq 20); do
-    sleep 0.025
-    if xclip -o -selection $sel -t TARGETS 2>/dev/null | grep -qx text/uri-list; then
-        uri=$(xclip -o -selection $sel -t text/uri-list 2>/dev/null | tr -d '\r' | grep -m1 .)
-        break
+    # Guarda o conteúdo atual no formato mais útil que estiver disponível
+    targets=$(xclip -o -selection $sel -t TARGETS 2>/dev/null)
+    old_type=
+    for t in text/uri-list image/png UTF8_STRING text/plain; do
+        if grep -qx "$t" <<<"$targets"; then old_type=$t; break; fi
+    done
+    [ -n "$old_type" ] && xclip -o -selection $sel -t "$old_type" >"$saved" 2>/dev/null
+
+    # Marca a área de transferência para saber se o Ctrl+C copiou algo
+    mark="quicklook-$$-$RANDOM"
+    printf %s "$mark" | xclip -i -selection $sel >/dev/null 2>&1 8>&- 9>&-
+    xdotool key --clearmodifiers ctrl+c
+
+    for _ in $(seq 20); do
+        sleep 0.025
+        if xclip -o -selection $sel -t TARGETS 2>/dev/null | grep -qx text/uri-list; then
+            uri=$(xclip -o -selection $sel -t text/uri-list 2>/dev/null | tr -d '\r' | grep -m1 .)
+            break
+        fi
+        [ "$(xclip -o -selection $sel 2>/dev/null)" != "$mark" ] && break
+    done
+
+    # O xclip fica rodando para guardar o conteúdo. Sem desviar a saída dele,
+    # quem chama $(selected_uri) espera até alguém copiar outra coisa; sem fechar
+    # os descritores 8 e 9, ele segura as travas do --sync.
+    if [ -n "$old_type" ]; then
+        xclip -i -selection $sel -t "$old_type" <"$saved" >/dev/null 2>&1 8>&- 9>&-
+    else
+        xclip -i -selection $sel </dev/null >/dev/null 2>&1 8>&- 9>&-
     fi
-    [ "$(xclip -o -selection $sel 2>/dev/null)" != "$mark" ] && break
-done
+    rm -f "$saved"
+    printf %s "$uri"
+}
 
-restore
+show_file() {  # uri, janela-mãe
+    gdbus call "${PREVIEWER[@]}" --method org.gnome.NautilusPreviewer2.ShowFile \
+        "$1" "${2:+x11:$(printf '%x' "$2")}" false >/dev/null 2>&1
+}
+
+close_preview() {
+    rm -f "$OPEN_FLAG"
+    gdbus call "${PREVIEWER[@]}" --method org.gnome.NautilusPreviewer2.Close >/dev/null 2>&1
+}
+
+case "${1:-}" in
+--close)
+    close_preview
+    exit 0 ;;
+--sync)
+    # Com a seta segurada, as chamadas chegam a cada ~0,03 s. Roda uma por vez e
+    # deixa no máximo uma esperando: ela lê a seleção mais recente, então as
+    # outras podem ser descartadas.
+    exec 8>"${XDG_RUNTIME_DIR:-/tmp}/quicklook-dolphin.queue"
+    flock -n 8 || exit 0
+    exec 9>"${XDG_RUNTIME_DIR:-/tmp}/quicklook-dolphin.lock"
+    flock -w 2 9 || exit 0
+    flock -u 8
+    if [ -z "$(preview_window)" ]; then
+        rm -f "$OPEN_FLAG"   # fechada pelo mouse; o Toshy volta a tratar as setas normalmente
+        exit 0
+    fi
+    origin=$(xdotool getactivewindow 2>/dev/null)
+    uri=$(selected_uri)
+    [ -f "$OPEN_FLAG" ] && [ -n "$uri" ] && show_file "$uri" "$origin"
+    # Fechada (Esc/Espaço) enquanto esta chamada rodava: o ShowFile a reabriria
+    [ -f "$OPEN_FLAG" ] || close_preview
+    exit 0 ;;
+esac
+
+# Com a tecla segurada, o Toshy repete o comando a cada ~0,1 s, e cada chamada
+# abre ou fecha a pré-visualização. Ignora chamadas a menos de 0,7 s da anterior.
+stamp="${XDG_RUNTIME_DIR:-/tmp}/quicklook-dolphin.stamp"
+now=$(date +%s%3N)
+last=$(cat "$stamp" 2>/dev/null || echo 0)
+echo "$now" >"$stamp"
+[ $((now - last)) -lt 700 ] && exit 0
+
+# Pré-visualização já aberta: o Espaço chegou à janela de origem porque ela não
+# está em foco. Fecha-a, como o macOS faz.
+if [ -n "$(preview_window)" ]; then
+    close_preview
+    exit 0
+fi
+
+origin=$(xdotool getactivewindow 2>/dev/null)
+uri=$(selected_uri)
 
 if [ -n "$uri" ]; then
-    exec sushi "$uri"
+    # Depois que a janela do sushi 46 é fechada, o serviço não mostra mais
+    # nenhuma (as novas ficam sem mapear). Reinicia o serviço a cada abertura;
+    # o D-Bus o sobe de novo em ~0,6 s.
+    pkill -f "$SERVICE"
+    for _ in $(seq 20); do pgrep -f "$SERVICE" >/dev/null || break; sleep 0.05; done
+
+    # Com a janela de origem como mãe, a pré-visualização fica sobre ela
+    show_file "$uri" "$origin"
+
+    # A pré-visualização toma o foco ao aparecer; devolve-o à janela de origem,
+    # que continua embaixo dela (a pré-visualização é filha dela)
+    for _ in $(seq 50); do
+        sleep 0.1
+        [ -n "$(preview_window)" ] && break
+    done
+    [ -n "$origin" ] && xdotool windowactivate "$origin" 2>/dev/null
+    touch "$OPEN_FLAG"
 elif [ "${1:-}" = --space ]; then
     xdotool key --clearmodifiers space
 fi

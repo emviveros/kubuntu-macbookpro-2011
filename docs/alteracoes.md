@@ -2,6 +2,21 @@
 
 Cada alteração lista o arquivo e a chave (para scripts e agentes) e o caminho na interface (para fazer à mão). Os caminhos na interface são do Plasma 5.27 em português.
 
+## 0. Pacotes (`scripts/00-pacotes.sh`)
+
+Instala só o que falta e pede a senha do sudo uma vez:
+
+| Pacote | Para quê |
+|---|---|
+| `appmenu-gtk3-module` | Menu global em apps GTK (seção 4) |
+| `gnome-sushi`, `xclip`, `xdotool` | Quick Look no Dolphin (seção 7) |
+| `python3-dbus` | Gravar atalhos no kglobalaccel (seções 3 e 9) |
+| `vlc`, `plasma-browser-integration` | Teclas de mídia (seção 8) |
+| `touchegg` 2.x, do `ppa:touchegg/stable` | Gestos (seção 9); o do Ubuntu é o 1.x |
+| Toshy (`git clone` em `~/.local/src/toshy` + `./setup_toshy.py install`) | Teclado estilo macOS (seção 7). O instalador é interativo e exige reiniciar o computador |
+
+O Google Chrome (seção 6) não é instalado: baixe-o do site do Google.
+
 ## 1. Janelas (`scripts/10-janelas.sh`)
 
 | O quê | Antes | Depois | Arquivo → grupo → chave |
@@ -84,7 +99,7 @@ Na interface: *Exibir → Modo de visualização → Compacto* e *Configurar Dol
 
 Usa o [Toshy](https://github.com/RedBearAK/toshy), que remapeia por aplicativo: ⌘ faz o papel do Ctrl nos apps gráficos, e no terminal ⌘+C copia enquanto Ctrl+C interrompe. ⌘+Tab troca de app, ⌘+Espaço abre o lançador e Option+setas pula palavras. O Toshy roda como serviço de usuário do systemd e tem ícone na bandeja.
 
-Instalação (interativa, pede sudo). Rode no Konsole:
+Instalação: `scripts/00-pacotes.sh` faz os passos abaixo. À mão, no Konsole:
 
 ```bash
 sudo apt install gnome-sushi xclip xdotool
@@ -104,7 +119,7 @@ O script insere dois trechos (`files/toshy/*.py`) nas *slices* `user_custom_func
 | `⌘+Shift+4` | Região selecionável, salva na Área de trabalho |
 | `⌘+Shift+5` | Abre o Spectacle (painel de captura) |
 | `Ctrl+⌘+Shift+3` / `4` | Igual, mas copia para a área de transferência |
-| `Espaço` ou `⌘+Y` no Dolphin | Pré-visualização (Quick Look) com o `sushi`. `Espaço` ou `Esc` fecham. |
+| `Espaço` ou `⌘+Y` no Dolphin ou na Área de trabalho | Pré-visualização (Quick Look) com o `sushi`. As setas mudam a seleção e ela acompanha; `Espaço` ou `Esc` fecham. |
 
 **Apagar sem tecla Del.** O MacBook não tem Del; a tecla "delete" é o Backspace do Linux. O `Fn+Backspace → Del` vem do driver `hid_apple`, e o restante vem do Toshy, a não ser onde a tabela indica outra origem:
 
@@ -118,7 +133,9 @@ O script insere dois trechos (`files/toshy/*.py`) nas *slices* `user_custom_func
 
 No terminal, `⌘+Delete` apaga até o começo da linha (`Ctrl+U`) e `Option+Delete` apaga a palavra anterior (`Ctrl+W`).
 
-**Como funciona a pré-visualização:** o Dolphin não informa a seleção por D-Bus. Por isso, `~/.local/bin/quicklook-dolphin` (cópia de `files/quicklook-dolphin`) manda Ctrl+C, lê o endereço do arquivo na área de transferência e depois restaura o conteúdo anterior. Se nada foi copiado como arquivo (renomeando ou digitando no filtro), o Espaço é digitado normalmente, com um atraso de cerca de 50 ms.
+**Perfil do AppArmor:** o script instala `files/apparmor-nautilus-previewer` em `/etc/apparmor.d/nautilus-previewer` e **pede a senha do sudo** quando o perfil falta ou mudou. Sem ele, pré-visualizar HTML derruba o serviço de pré-visualização (ver [problemas-conhecidos.md](problemas-conhecidos.md)).
+
+**Como funciona a pré-visualização:** nem o Dolphin nem a Área de trabalho informam a seleção por D-Bus. Por isso, `~/.local/bin/quicklook-dolphin` (cópia de `files/quicklook-dolphin`) manda Ctrl+C, lê o endereço do arquivo na área de transferência e depois restaura o conteúdo anterior. Se nada foi copiado como arquivo (renomeando ou digitando no filtro), o Espaço é digitado normalmente. O script chama o serviço `org.gnome.NautilusPreviewer` pelo D-Bus, com a janela de origem como janela-mãe, e devolve o foco a ela: a seleção continua visível. Enquanto a pré-visualização está aberta, existe o arquivo `$XDG_RUNTIME_DIR/quicklook-dolphin.open`, e o Toshy repassa as setas à janela e chama `quicklook-dolphin --sync`, que mostra o novo item selecionado; `Esc` chama `--close`. Repetições de tecla a menos de 0,7 s são ignoradas.
 
 Para desfazer: apague o trecho entre as marcas e rode `toshy-services-restart`. Para remover o Toshy: `cd ~/.local/src/toshy && ./setup_toshy.py uninstall`.
 

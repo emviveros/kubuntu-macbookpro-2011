@@ -16,13 +16,27 @@ keymap("User macOS capturas de tela", {
     not ctx_app_is_remote
 )
 
-keymap("User macOS Quick Look no Dolphin", {
-    C("Space"):                 km_run([QUICKLOOK_CMD, '--space']),              # Espaço: pré-visualizar
-    C("RC-y"):                  km_run([QUICKLOOK_CMD]),                         # ⌘+Y: pré-visualizar
+# Com a pré-visualização aberta, o foco fica no Dolphin: as setas movem a seleção
+# e a pré-visualização acompanha, como no Finder
+keymap("User macOS Quick Look aberto", {
+    C("Up"):                    [C("Up"), km_run([QUICKLOOK_CMD, '--sync'])],
+    C("Down"):                  [C("Down"), km_run([QUICKLOOK_CMD, '--sync'])],
+    C("Left"):                  [C("Left"), km_run([QUICKLOOK_CMD, '--sync'])],
+    C("Right"):                 [C("Right"), km_run([QUICKLOOK_CMD, '--sync'])],
+    C("Esc"):                   km_run([QUICKLOOK_CMD, '--close']),              # Esc: fechar
+}, when = lambda ctx:
+    cnfg.screen_has_focus and
+    os.path.exists(QUICKLOOK_OPEN) and
+    ctx_quicklook_origin(ctx)
+)
+
+keymap("User macOS Quick Look", {
+    C("Space"):                 km_run([QUICKLOOK_CMD, '--space']),              # Espaço: pré-visualizar/fechar
+    C("RC-y"):                  km_run([QUICKLOOK_CMD]),                         # ⌘+Y: pré-visualizar/fechar
     C("Alt-RC-Backspace"):      C("Shift-Delete"),                               # ⌘+Option+Delete: apagar de vez
 }, when = lambda ctx:
     cnfg.screen_has_focus and
-    matchProps(clas="^dolphin$|^org.kde.dolphin$")(ctx)
+    ctx_quicklook_origin(ctx)
 )
 
 keymap("User macOS Launchpad", {
